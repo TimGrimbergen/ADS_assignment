@@ -30,4 +30,6 @@ def test_online(instances, online_algorithm, offline_algorithm=None):
         instances (list[tuples])    -   a list containing (random) test instances
         online_algorithm    -   a object that takes as input (n,m) and has a function/object that 
                                 that can be called repeatedly in a loop
+    OUTPUT:
+        None
     '''
