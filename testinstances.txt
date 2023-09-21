@@ -21,7 +21,7 @@
 0, 0
 0, 0
 
-# Test case 2 (always n seats, ticket prices [100 - 200] & hotel price [2 - 10])
+# Test case 2 (always n seats, ticket price [100 - 200], hotel price [2 - 10])
 ## Input
 100
 10
@@ -41,7 +41,7 @@
 100, 0
 0, 0
 
-# Test case 3 (bounded seats [n/10 - n], ticket price [100 - 200] & hotel price [2 - 10])
+# Test case 3 (seats [n/10 - n], ticket price [100 - 200], hotel price [2 - 10])
 ## Input
 100
 10
@@ -61,7 +61,7 @@
 100, 0
 0, 0
 
-# Test case 4 (bounded seats [n/10 - n], ticket price [100 - 200] & hotel price [2 - 10])
+# Test case 4 (seats [n/10 - n], ticket price [100 - 200], hotel price [2 - 10])
 ## Input
 100
 10
