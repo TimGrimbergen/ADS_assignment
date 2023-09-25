@@ -66,6 +66,8 @@ class qThresholdOnline(OnlineAlgorithms):
     #   - 1 <= p[i] <= p_max
     #   - h[i] = 0
     #   - online algorithm knows the range of p[i] (important!)
+
+    # I think the optimal choice of q is q=sqrt(1/p_max)
     
     def __init__(self, q, p_max):
         super().__init__()
