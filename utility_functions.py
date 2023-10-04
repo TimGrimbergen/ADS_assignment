@@ -40,17 +40,12 @@ def test_online(instances, online_algorithm):
     data = np.zeros((len(instances),3))
 
     for i,I in enumerate(instances):
-        n = I[0]
-        m = I[1]
-
-        # instantiate the online algorithm for number of people and days (not necessary for all algorithms)
-        online_algorithm.instantiate_instance(n, m) 
-
         # run the online algoritm on the instance (cost is stored in 'data' variable)
-        data_on = online_algorithm.solve_instance(I)
-        data_off = solve_offline(*I)[1]
+        online_decisions, online_total_price = online_algorithm.solve_instance(I)
 
-        data[i] = (data_on / data_off, data_on, data_off)
+        offline_decisions, offline_total_price = solve_offline(*I)
+
+        data[i] = (online_total_price / offline_total_price, online_total_price, offline_total_price)
     
     return data
 
