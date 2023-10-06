@@ -32,7 +32,6 @@ def generate_test_instances(N=1, n=100, m=10, s=100, p=(10,100), h=(10,100), r='
             mu_s = 0 if isinstance(s, int) else (s[1] - s[0]) / 2
             mu_p = 0 if isinstance(p, int) else (p[1] - p[0]) / 2
             mu_h = 0 if isinstance(h, int) else (h[1] - h[0]) / 2
-            print(mu_n, mu_m, mu_s, mu_p, mu_h)
 
             # Assuming that a normal distribution in the root form has 3 standard deviations from both sides of the mean (and is not skewed as well).
             sigma_n = 0 if isinstance(n, int) else (n[1] - n[0]) / 6
@@ -40,7 +39,6 @@ def generate_test_instances(N=1, n=100, m=10, s=100, p=(10,100), h=(10,100), r='
             sigma_s = 0 if isinstance(s, int) else (s[1] - s[0]) / 6
             sigma_p = 0 if isinstance(p, int) else (p[1] - p[0]) / 6
             sigma_h = 0 if isinstance(h, int) else (h[1] - h[0]) / 6
-            print(sigma_n, sigma_m, sigma_s, sigma_p, sigma_h)
 
             for i in range(N):
                 n_ = n if isinstance(n, int) else round(random.normalvariate(mu_n, sigma_n))
@@ -80,6 +78,3 @@ def plot_data(data, save_location, file_name):
     plt.hist(data[:,0])
     plt.title("Histogram of observed competitive ratios")
     plt.savefig(f'{save_location}/{file_name}')
-
-instances = generate_test_instances(m=30, r='normal')
-print(instances)
