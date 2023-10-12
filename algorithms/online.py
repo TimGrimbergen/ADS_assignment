@@ -21,6 +21,7 @@ class OnlineAlgorithms:
 
     # basically every online algorithm uses this procedure, hence it's in the parent class
     def solve_instance(self, I):
+        self.reset()
         total_price = 0 # total cost
         self.n_remaining = self.n = I[0]
         self.m = I[1]
@@ -121,12 +122,22 @@ class GreedyOnline(OnlineAlgorithms):
         self.pmin = pmax
         self.CC = 0
 
-    def get_decision_function():
-        def decision(self, i, p_i, h_i, s_i):
-            self.pmin = min(self.pmin, p_i)
-            x = round( (self.pmax*self.n_remaining - self.pmin*self.n_remaining - self.CC*(self.pmin-1) )/ ( self.pmax + p_i*self.pmin - self.pmin - p_i ))
-            return [x, self.n_remaining - x]
+    def get_decision_function(self):
+        def decision(n_remaining, day, s_i, p_i, h_i):
+            if day == self.m - 1: return [n_remaining, 0]
+            p_min_temp = min(self.pmin, p_i)
+            x = round( (self.pmax*n_remaining - p_min_temp*n_remaining - self.CC*(p_min_temp-1) ) / ( self.pmax + p_i*p_min_temp - p_min_temp - p_i ))
+            if x >= 1:
+                self.pmin = p_min_temp
+            # x = round( (self.pmax*n_remaining - self.pmin*n_remaining )/ ( self.pmax + p_i**2 - 2*p_i ))
+            self.CC += x*p_i
+            return [x, n_remaining - x]
 
         return decision
+    
+    def reset(self):
+        super().__init__()
+        self.pmin = self.pmax
+        self.CC = 0
         
 

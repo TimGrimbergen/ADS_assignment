@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from algorithms.offline import solve_offline
-from algorithms.online import qThresholdOnline, RandomOnline
+from algorithms.online import qThresholdOnline, RandomOnline, GreedyOnline
 from input_output_handler import deserialize, validate_params, parse_output, serialize
 
 input_file_directory = 'input' 
@@ -33,7 +33,11 @@ elif algorithm == "deterministic": # online deterministic algorithm
     output = qThresholdOnline(np.sqrt(1/p_max), p_max).solve_instance(params)
 
 elif algorithm == "random": # online randomized algorithm
+    p_max = np.max(params[3]) # WARNING: this does not make sense right?
     output = RandomOnline().solve_instance(params)
+
+elif algorithm == "greedy":
+    output = GreedyOnline()
 
 else:
     output = solve_offline(*params) # default, fallback
