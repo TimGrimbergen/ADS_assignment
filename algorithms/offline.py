@@ -1,34 +1,28 @@
-import numpy as np
-
-# function as defined in paper, see Lemma 1.
-def total(j, p, h):
-    if (j == 0):
-        return p[j]
-    else:
-        return p[j] + np.sum(h[0:j])
-
 # returns tuple ('schedule array', 'total_cost')
 # terminology is the same as what's used in the paper
-def solve_offline(n, m, s, p, h):
-    total_price = [(i, s[i], total(i, p, h)) for i in range(m)]
-    best_days = sorted(total_price, key = lambda x: -x[2])
+def solve_offline(n: int, m: int, s: list[int], p: list[int], h: list[int]):
+    assert n >= 1, "n must be at least 1"
+    assert m >= 1, "m must be at least 1"
+    assert len(s) == len(p) == len(h) == m, "s, p, h must have length m"
+    assert all(p_i >= 1 for p_i in p), "p must be at least 1"
+    assert all(s_i >= 1 for s_i in s), "s must be at least 1"
+    assert all(h_i >= 0 for h_i in h), "h must be at least 0"
 
-    day_send = [0 for _ in range(m)]
-    total_cost = 0
-    n_remaining = n
-    # iterate over best days, using Lemma 2 and Lemma 3.
-    while n_remaining > 0:
-        day, seats, price = best_days.pop()
-        seats_used = max(min(n_remaining,seats), 0)
-        day_send[day] = seats_used
-        n_remaining -= seats_used
-        total_cost += seats_used * price
+    # Total cost per day with property:
+    # t[i] = p[i] + sum(h[j] for j in range(i))
+    t = [p_i + sum(h[:i]) for i, p_i in enumerate(p)]
 
-    # return data conforming the requested format.
-    schedule_array = [(0,0) for _ in range(m)]
-    n_remaining = n
-    for day,seats_used in enumerate(day_send):
-        schedule_array[day] = (seats_used, n_remaining-seats_used)
-        n_remaining -= seats_used
+    # Number of people flying on day f[i].
+    f = [0 for _ in range(m)]
+    for _, s_i, i in sorted(zip(t, s, range(m)), reverse=True):
+        f[i] = min(n, s_i)
+        n -= f[i]
 
-    return schedule_array, total_cost
+    assert n == 0, "n must be 0 after all days have been scheduled"
+
+    # Number of people staying on day r[i] calculated by summing how many people
+    # went home after day i.
+    s = [sum(f[i+1:]) for i in range(m)]
+
+    # Format to: (flying, staying), total_cost
+    return list(zip(f, s)), sum(f[i] * t[i] for i in range(m))
