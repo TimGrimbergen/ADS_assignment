@@ -2,7 +2,7 @@ import sys
 
 # parent class with basic online algorithm functionality
 class OnlineAlgorithms:
-    
+
     # initialize
     def __init__(self):
         self.n_remaining = None
@@ -21,12 +21,12 @@ class OnlineAlgorithms:
         total_price = 0 # total cost
         self.n_remaining = self.n = I[0]
         self.m = I[1]
-        decisions = [[0,0] for _ in range(self.m)]
-        
+        decisions = [(0,0) for _ in range(self.m)]
+
         for day in range(self.m):
             if self.n_remaining <= 0: # early exit
-                return [decisions, total_price] 
-            
+                return decisions, total_price
+
             # number of seats, today
             s_day = I[2][day]
 
@@ -40,16 +40,16 @@ class OnlineAlgorithms:
             flying, staying = self.decision_function(self.n_remaining, day, s_day, p_day, h_day)
 
             # store decisions for each day
-            decisions[day] = [flying, staying]
+            decisions[day] = (flying, staying)
 
             # update relevant variables
             self.n_remaining -= flying
             total_price += (flying * p_day) + (staying * h_day)
-        
+
         if self.n_remaining > 0:
             sys.exit(f"INVALID ALGORITHM {self.algorithm_name}! After execution of the algorithm, there are still {self.n_remaining} people remaining, from original {self.n}. Days: {self.m}, current day: {day}")
 
-        return [decisions, total_price]
+        return decisions, total_price
 
 class qThresholdOnline(OnlineAlgorithms):
     # We send as many people as possible home when p[i] < q * p_max
@@ -60,7 +60,7 @@ class qThresholdOnline(OnlineAlgorithms):
     #   - online algorithm knows the range of p[i] (important!)
 
     # We think the optimal choice of q is q=sqrt(1/p_max)
-    
+
     def __init__(self, q, p_max):
         super().__init__()
         self.algorithm_name = "Q-Threshold Online"
@@ -77,10 +77,10 @@ class qThresholdOnline(OnlineAlgorithms):
             elif (day + 1) >= self.m: # if last day
                 decision = (s_day, n_remaining - s_day) # send max people back
             else:
-                decision = (0, n_remaining) # send no people, everyone stays 
+                decision = (0, n_remaining) # send no people, everyone stays
 
             return decision
-        
+
         return decide
 
 class RandomOnline(OnlineAlgorithms):
@@ -101,8 +101,8 @@ class RandomOnline(OnlineAlgorithms):
             elif (day + 1) >= self.m: # if last day
                 decision = (s_day, n_remaining - s_day) # send max people back
             else:
-                decision = (0, n_remaining) # send no people, everyone stays 
+                decision = (0, n_remaining) # send no people, everyone stays
 
             return decision
-        
+
         return decide
