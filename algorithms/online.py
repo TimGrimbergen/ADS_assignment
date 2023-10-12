@@ -8,9 +8,12 @@ class OnlineAlgorithms:
         self.n_remaining = None
         self.n = None
         self.m = None
-        self.decision_function = None
+        #self.decision_function = None # every online algortithm needs a function that decides (f_i, l_i) for day i 
         self.buffer = []
         self.algorithm_name = "Unknown"
+
+    def decision_function(i, p_i, h_i, s_i):
+        raise NotImplementedError
 
     # for some algorithms the historic data might be useful
     def append_buffer(self, instance_data):
@@ -21,11 +24,11 @@ class OnlineAlgorithms:
         total_price = 0 # total cost
         self.n_remaining = self.n = I[0]
         self.m = I[1]
-        decisions = [[0,0] for _ in range(self.m)]
+        decisions = [(0,0) for _ in range(self.m)]
         
         for day in range(self.m):
             if self.n_remaining <= 0: # early exit
-                return [decisions, total_price] 
+                return decisions, total_price
             
             # number of seats, today
             s_day = I[2][day]
@@ -40,7 +43,7 @@ class OnlineAlgorithms:
             flying, staying = self.decision_function(self.n_remaining, day, s_day, p_day, h_day)
 
             # store decisions for each day
-            decisions[day] = [flying, staying]
+            decisions[day] = (flying, staying)
 
             # update relevant variables
             self.n_remaining -= flying
@@ -49,7 +52,7 @@ class OnlineAlgorithms:
         if self.n_remaining > 0:
             sys.exit(f"INVALID ALGORITHM {self.algorithm_name}! After execution of the algorithm, there are still {self.n_remaining} people remaining, from original {self.n}. Days: {self.m}, current day: {day}")
 
-        return [decisions, total_price]
+        return decisions, total_price
 
 class qThresholdOnline(OnlineAlgorithms):
     # We send as many people as possible home when p[i] < q * p_max
@@ -65,7 +68,9 @@ class qThresholdOnline(OnlineAlgorithms):
         super().__init__()
         self.algorithm_name = "Q-Threshold Online"
         self.threshold = q * p_max
-        self.decision_function = self.get_decision_function()
+
+    def decision_function(i, p_i, h_i, s_i):
+        return
 
     # this function instantiates the decision function
     def get_decision_function(self):
@@ -89,7 +94,6 @@ class RandomOnline(OnlineAlgorithms):
     def __init__(self):
         super().__init__()
         self.algorithm_name = "Random Online"
-        self.decision_function = self.get_decision_function()
 
     # this function instantiates the decision function
     def get_decision_function(self):
@@ -106,3 +110,23 @@ class RandomOnline(OnlineAlgorithms):
             return decision
         
         return decide
+
+
+class GreedyOnline(OnlineAlgorithms):
+    def __init__(self, pmax):
+        super().__init__()
+        self.algorithm_name = "Greedy_Online" 
+        self.decision_function = self.get_decision_function()
+        self.pmax = pmax
+        self.pmin = pmax
+        self.CC = 0
+
+    def get_decision_function():
+        def decision(self, i, p_i, h_i, s_i):
+            self.pmin = min(self.pmin, p_i)
+            x = round( (self.pmax*self.n_remaining - self.pmin*self.n_remaining - self.CC*(self.pmin-1) )/ ( self.pmax + p_i*self.pmin - self.pmin - p_i ))
+            return [x, self.n_remaining - x]
+
+        return decision
+        
+
