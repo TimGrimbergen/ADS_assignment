@@ -1,57 +1,127 @@
-import sys
+from abc import ABC, abstractmethod
+from typing import Iterator, Iterable
 
-# parent class with basic online algorithm functionality
-class OnlineAlgorithms:
 
-    # initialize
-    def __init__(self):
-        self.n_remaining = None
-        self.n = None
-        self.m = None
-        self.decision_function = None
-        self.buffer = []
-        self.algorithm_name = "Unknown"
+class StrikeInstance:
+    def __init__(self, n: int, m: int, s: Iterable[int],
+                 p: Iterable[int], h: Iterable[int]) -> None:
+        """
+        Inputs:
+            n: number of people
+            m: number of days
+            s: number of seats available on each day
+            p: plane ticket price on each day
+            h: hotel price on each day
+        """
+        assert n > 0, "n must be positive"
+        assert m > 0, "m must be positive"
+        assert len(s) == len(p) == len(h) == m, "s, p, h must have length m"
+        self.__n = n; self.__m = m
+        self.__s = tuple(s)
+        self.__p = tuple(p)
+        self.__h = tuple(h)
 
-    # for some algorithms the historic data might be useful
-    def append_buffer(self, instance_data):
-        self.buffer.append(instance_data)
+    @property
+    def n(self) -> int:
+        return self.__n
 
-    # basically every online algorithm uses this procedure, hence it's in the parent class
-    def solve_instance(self, I):
-        total_price = 0 # total cost
-        self.n_remaining = self.n = I[0]
-        self.m = I[1]
-        decisions = [(0,0) for _ in range(self.m)]
+    @property
+    def m(self) -> int:
+        return self.__m
 
-        for day in range(self.m):
-            if self.n_remaining <= 0: # early exit
-                return decisions, total_price
+    @property
+    def s(self) -> list[int]:
+        return list(self.__s)
 
-            # number of seats, today
-            s_day = I[2][day]
+    @property
+    def p(self) -> list[int]:
+        return list(self.__p)
 
-            # ticket price, today
-            p_day = I[3][day]
+    @property
+    def h(self) -> list[int]:
+        return list(self.__h)
 
-            # hotel price, today
-            h_day = I[4][day]
+    def __len__(self) -> int:
+        return self.m
 
-            # get the decision (flying, staying) from the algorithm
-            flying, staying = self.decision_function(self.n_remaining, day, s_day, p_day, h_day)
+    def __iter__(self) -> Iterator[tuple[int, int, int]]:
+        for i in range(self.m):
+            yield self.__s[i], self.__p[i], self.__h[i]
 
-            # store decisions for each day
-            decisions[day] = (flying, staying)
 
-            # update relevant variables
-            self.n_remaining -= flying
-            total_price += (flying * p_day) + (staying * h_day)
+class OnlineAlgorithm(ABC):
+    __algorithm_name = "Online Algorithm"
 
-        if self.n_remaining > 0:
-            sys.exit(f"INVALID ALGORITHM {self.algorithm_name}! After execution of the algorithm, there are still {self.n_remaining} people remaining, from original {self.n}. Days: {self.m}, current day: {day}")
+    @property
+    def algorithm_name(self) -> str:
+        return self.__algorithm_name
 
-        return decisions, total_price
+    @classmethod
+    def __subclasshook__(cls, subclass):
+        return (hasattr(subclass, 'setup') and
+                callable(subclass.setup) and
+                hasattr(subclass, 'decide') and
+                callable(subclass.decide) or
+                NotImplemented)
 
-class qThresholdOnline(OnlineAlgorithms):
+    def __init__(self, instance: StrikeInstance) -> None:
+        self.__instance = instance
+        self.__cost = 0
+        self.__i = 0
+        self.__f = []
+        self.__r = []
+
+    @property
+    def instance(self) -> StrikeInstance:
+        return self.__instance
+
+    @property
+    def cost(self) -> int:
+        if self.__i < self.instance.m:
+            self.run()
+        return self.__cost
+
+    @property
+    def f(self) -> list[int]:
+        if self.__i < self.instance.m:
+            self.run()
+        return self.__f
+
+    @property
+    def r(self) -> list[int]:
+        if self.__i < self.instance.m:
+            self.run()
+        return self.__r
+
+    def __iter__(self) -> Iterator[tuple[int, int]]:
+        for i, (s_i, p_i, h_i) in enumerate(self.instance):
+            if i < self.__i:  # already decided
+                yield self.__f[i], self.__r[i]
+            else:  # decide if not already decided
+                n_i = self.instance.n if i == 0 else self.__r[i - 1]
+                f_i = self.decide(i, n_i, s_i, p_i, h_i)
+                r_i = n_i - f_i
+                self.__f.append(f_i)
+                self.__r.append(r_i)
+                self.__cost += f_i * p_i + r_i * h_i
+                self.__i += 1
+                yield f_i, r_i
+
+    def run(self) -> None:
+        for _ in self:
+            pass
+
+    @abstractmethod
+    def setup(self) -> None:
+        pass
+
+    @abstractmethod
+    def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
+        pass
+
+
+class qThresholdOnline(OnlineAlgorithm):
+    __algorithm_name = "q-Threshold Online"
     # We send as many people as possible home when p[i] < q * p_max
     # ASSUMPTIONS FOR THEORETICAL RESULTS:
     #   - s[i] = n
@@ -83,7 +153,7 @@ class qThresholdOnline(OnlineAlgorithms):
 
         return decide
 
-class RandomOnline(OnlineAlgorithms):
+class RandomOnline(OnlineAlgorithm):
     # base of some randomized algorithm
 
     def __init__(self):
