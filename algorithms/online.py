@@ -1,5 +1,6 @@
 import sys
-
+import math
+import numpy as np
 # parent class with basic online algorithm functionality
 class OnlineAlgorithms:
     
@@ -8,12 +9,9 @@ class OnlineAlgorithms:
         self.n_remaining = None
         self.n = None
         self.m = None
-        #self.decision_function = None # every online algortithm needs a function that decides (f_i, l_i) for day i 
+        self.decision_function = None # every online algortithm needs a function that decides (f_i, l_i) for day i 
         self.buffer = []
         self.algorithm_name = "Unknown"
-
-    def decision_function(i, p_i, h_i, s_i):
-        raise NotImplementedError
 
     # for some algorithms the historic data might be useful
     def append_buffer(self, instance_data):
@@ -65,20 +63,21 @@ class qThresholdOnline(OnlineAlgorithms):
 
     # We think the optimal choice of q is q=sqrt(1/p_max)
     
-    def __init__(self, q, p_max):
+    def __init__(self, p_max):
         super().__init__()
         self.algorithm_name = "Q-Threshold Online"
-        self.threshold = q * p_max
+        self.threshold = math.floor(math.sqrt(p_max))
+        self.decision_function = self.get_decision_function()
 
-    def decision_function(i, p_i, h_i, s_i):
-        return
+    def reset(self):
+        pass
 
     # this function instantiates the decision function
     def get_decision_function(self):
 
         # given some data, decide (how many people to send back, how many people to keep in a hotel)
         def decide(n_remaining, day, s_day, p_day, h_day):
-            if p_day < self.threshold:
+            if p_day <= self.threshold:
                 decision = (s_day, n_remaining - s_day)
             elif (day + 1) >= self.m: # if last day
                 decision = (s_day, n_remaining - s_day) # send max people back
@@ -126,7 +125,8 @@ class GreedyOnline(OnlineAlgorithms):
         def decision(n_remaining, day, s_i, p_i, h_i):
             if day == self.m - 1: return [n_remaining, 0]
             p_min_temp = min(self.pmin, p_i)
-            x = round( (self.pmax*n_remaining - p_min_temp*n_remaining - self.CC*(p_min_temp-1) ) / ( self.pmax + p_i*p_min_temp - p_min_temp - p_i ))
+            # x = round( (self.pmax*n_remaining - p_min_temp*n_remaining - self.CC*(p_min_temp-1) ) / ( self.pmax + p_i*p_min_temp - p_min_temp - p_i ))
+            x = round( (self.pmax*n_remaining - p_i*n_remaining )/ ( self.pmax + p_i**2 - 2*p_i ))
             if x >= 1:
                 self.pmin = p_min_temp
             # x = round( (self.pmax*n_remaining - self.pmin*n_remaining )/ ( self.pmax + p_i**2 - 2*p_i ))
@@ -136,8 +136,34 @@ class GreedyOnline(OnlineAlgorithms):
         return decision
     
     def reset(self):
-        super().__init__()
         self.pmin = self.pmax
         self.CC = 0
         
+class SuperGreedyOnline(OnlineAlgorithms):
+    def __init__(self, pmax):
+        super().__init__()
+        self.algorithm_name = "Super_Greedy_Online" 
+        self.decision_function = self.get_decision_function()
+        self.pmax = pmax
+        self.pmin = pmax
+        self.CC = 0
 
+    def get_decision_function(self):
+        def decision(n_remaining, day, s_i, p_i, h_i):
+            if day == self.m - 1: return [n_remaining, 0]
+            self.p_min = min(self.pmin, p_i)
+            next_cost = [[(p_i_1, (self.CC + p_i*x + p_i_1*(n_remaining-x)) / min(self.p_min,p_i_1)) for p_i_1 in range(1,self.pmax+1)] for x in range(n_remaining+1)]
+            #print(next_cost)
+            next_cost_max = [(i,list(sorted(next_cost[i], key=lambda x: -x[1]))[0]) for i in range(n_remaining+1)]
+            #print(next_cost_max)
+            next_cost_person = list(sorted((next_cost_max), key=lambda x: x[1][1]))
+            x = next_cost_person[0][0]
+            #print(next_cost_person)
+            self.CC += x*p_i
+            return [x, n_remaining-x]
+
+        return decision
+    
+    def reset(self):
+        self.pmin = self.pmax
+        self.CC = 0

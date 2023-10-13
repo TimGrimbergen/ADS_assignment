@@ -62,7 +62,7 @@ def test_online(instances, online_algorithm):
     '''
 
     data = np.zeros((len(instances),3))
-    worst_case = (0, None)
+    worst_case = (0, None, None)
     for i,I in enumerate(instances):
         # run the online algoritm on the instance (cost is stored in 'data' variable)
         online_decisions, online_total_price = online_algorithm.solve_instance(I)
@@ -74,7 +74,7 @@ def test_online(instances, online_algorithm):
         data[i] = (ratio, online_total_price, offline_total_price)
 
         if ratio > worst_case[0]:
-            worst_case = (ratio, I)
+            worst_case = (ratio, I, online_decisions)
         # print(I[3], online_decisions, ratio) # debug
     return data, worst_case
 
@@ -118,7 +118,7 @@ def test_online_until_avgcase(instances, online_algorithm, n, change_threshold):
     return data
 
 def plot_data(data, save_location, file_name):
-    print(f"Worst case instance: {data[1][1]} with competitive ratio {data[1][0]}")
+    print(f"Worst case instance: {data[1][1]} \n with competitive ratio {data[1][0]} \n by making decisions {data[1][2]}")
     plt.figure(dpi=300)
     plt.hist(data[0][:,0])
     plt.title(f"Histogram of observed competitive ratios, max = {np.max(data[0][:,0])}")
