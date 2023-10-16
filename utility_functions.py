@@ -1,6 +1,8 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+
 from algorithms.offline import solve_offline
 
 # function to randomly generate test instances with certain bounds
@@ -47,6 +49,34 @@ def generate_test_instances(N=1, n=100, m=10, s=100, p=(10,100), h=(10,100), r='
                 p_ = [p]*m_ if isinstance(p, int) else [round(random.normalvariate(mu_p, sigma_p)) for _ in range(m_)]
                 h_ = [h]*m_ if isinstance(h, int) else [round(random.normalvariate(mu_h, sigma_h)) for _ in range(m_)]
                 instances.append((n_, m_, s_, p_, h_))
+        
+        case 'boundary':
+            for i in range(N):
+                n_ = n if isinstance(n, int) else round(random.choice([n[0], n[1]]))
+                m_ = m if isinstance(m, int) else round(random.choice([m[0], m[1]]))
+                s_ = [s]*m_ if isinstance(s, int) else [round(random.choice([s[0], s[1]])) for _ in range(m_)] 
+                p_ = [p]*m_ if isinstance(p, int) else [round(random.choice([p[0], p[1]])) for _ in range(m_)]
+                h_ = [h]*m_ if isinstance(h, int) else [round(random.choice([h[0], h[1]])) for _ in range(m_)]
+                instances.append((n_, m_, s_, p_, h_))
+        
+        case 'choice':
+            for i in range(N):
+                n_ = n if isinstance(n, int) else round(random.choice([n[0], n[1]]))
+                m_ = m if isinstance(m, int) else round(random.choice([m[0], m[1]]))
+                s_ = [s]*m_ if isinstance(s, int) else [random.choice(s) for _ in range(m_)] 
+                p_ = [p]*m_ if isinstance(p, int) else [random.choice(p) for _ in range(m_)]
+                h_ = [h]*m_ if isinstance(h, int) else [random.choice(h) for _ in range(m_)]
+                instances.append((n_, m_, s_, p_, h_))
+
+        case 'worstcase':
+            for i in range(N):
+                n_ = n if isinstance(n, int) else round(random.uniform(n[0], n[1]))
+                m_ = m if isinstance(m, int) else round(random.uniform(m[0], m[1]))
+                s_ = [s]*m_ if isinstance(s, int) else [round(random.uniform(s[0], s[1])) for _ in range(m_-1)]+[n_] 
+                p_ = [p]*m_ if isinstance(p, int) else [round(random.uniform(p[0], p[1])) for _ in range(m_-1)]+[p[0]]
+                h_ = [h]*m_ if isinstance(h, int) else [round(random.uniform(h[0], h[1])) for _ in range(m_-1)]+[h[0]]
+                instances.append((n_, m_, s_, p_, h_))
+
 
     return instances
 
@@ -63,7 +93,7 @@ def test_online(instances, online_algorithm):
 
     data = np.zeros((len(instances),3))
     worst_case = (0, None, None)
-    for i,I in enumerate(instances):
+    for i, I in enumerate(tqdm(instances)):
         # run the online algoritm on the instance (cost is stored in 'data' variable)
         online_decisions, online_total_price = online_algorithm.solve_instance(I)
 

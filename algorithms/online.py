@@ -152,7 +152,7 @@ class SuperGreedyOnline(OnlineAlgorithms):
         def decision(n_remaining, day, s_i, p_i, h_i):
             if day == self.m - 1: return [n_remaining, 0]
             self.p_min = min(self.pmin, p_i)
-            next_cost = [[(p_i_1, (self.CC + p_i*x + p_i_1*(n_remaining-x)) / min(self.p_min,p_i_1)) for p_i_1 in range(1,self.pmax+1)] for x in range(n_remaining+1)]
+            next_cost = [[(p_i_1, (self.CC + p_i*x + (p_i_1)*(n_remaining-x)) / min(self.p_min,p_i_1)) for p_i_1 in range(1,self.pmax+1)] for x in range(n_remaining+1)]
             #print(next_cost)
             next_cost_max = [(i,list(sorted(next_cost[i], key=lambda x: -x[1]))[0]) for i in range(n_remaining+1)]
             #print(next_cost_max)
@@ -167,3 +167,26 @@ class SuperGreedyOnline(OnlineAlgorithms):
     def reset(self):
         self.pmin = self.pmax
         self.CC = 0
+
+class DoubleThresholdOnline(OnlineAlgorithms):
+    def __init__(self, pmax):
+        super().__init__()
+        self.algorithm_name = "Double_Threshold_Online" 
+        self.decision_function = self.get_decision_function()
+        self.pmax = pmax
+        self.P = self.H = math.floor(math.sqrt(pmax))
+        self.hsum = 0 # som of hotel prices of all previous days
+
+    def get_decision_function(self):
+        def decision(n_remaining, day, s_i, p_i, h_i):
+            if day == self.m - 1: return [n_remaining, 0]
+            #if p_i <= h_i: return [n_remaining, 0]
+            if p_i + self.hsum <= self.P: return [n_remaining, 0]
+            if self.hsum + h_i >= self.H: return [n_remaining, 0]
+            self.hsum += h_i
+            return [0, n_remaining]
+
+        return decision
+    
+    def reset(self):
+        self.hsum = 0
