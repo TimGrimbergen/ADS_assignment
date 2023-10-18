@@ -113,14 +113,7 @@ class RandomOnline(OnlineAlgorithms):
         return decide
     
 class RandomizedQThresholdOnline(RandomOnline):
-    # We send as many people as possible home when p[i] < q * p_max
-    # ASSUMPTIONS FOR THEORETICAL RESULTS:
-    #   - s[i] = n
-    #   - 1 <= p[i] <= p_max
-    #   - h[i] = 0
-    #   - online algorithm knows the range of p[i] (important!)
-
-    # We think the optimal choice of q is q=sqrt(1/p_max)
+    # We send n_remaining - randint(1, lambda) if enough seats are available else as many as possible when p[i] < q * p_max
     
     def __init__(self, q, p_max, lam = LAMBDA):
         super().__init__()
@@ -135,12 +128,14 @@ class RandomizedQThresholdOnline(RandomOnline):
         # given some data, decide (how many people to send back, how many people to keep in a hotel)
         def decide(n_remaining, day, s_day, p_day, h_day):
             lamI = random.randint(1, self.lam)
-            if p_day < self.threshold:
+            if (day + 1) >= self.m: # if last day
+                flying = min(n_remaining, s_day)
+                staying = n_remaining - flying
+                decision = (flying, staying) # send max people back
+            elif p_day < self.threshold:
                 flying = min(n_remaining - lamI, s_day) #Send n remaining people - random int if enough seats are available, otherwise as many as possible 
                 staying = n_remaining - flying
                 decision = (flying, staying)
-            elif (day + 1) >= self.m: # if last day
-                decision = (s_day, n_remaining - s_day) # send max people back
             else:
                 decision = (0, n_remaining) # send no people, everyone stays 
 
