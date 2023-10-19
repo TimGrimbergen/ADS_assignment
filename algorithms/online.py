@@ -1,8 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-@dataclass
+@dataclass(frozen=True)
 class StrikeInstance:
     n: int  # Number of people
     m: int  # Number of days
@@ -32,6 +32,9 @@ class StrikeInstance:
                 h.append(int(h_i))
         return cls(n, m, s, p, h)
 
+    def __iter__(self) -> zip[tuple[int, int, int]]:
+        return zip(self.s, self.p, self.h)
+
 
 class OnlineAlgorithm(ABC):
     @classmethod
@@ -43,50 +46,66 @@ class OnlineAlgorithm(ABC):
                 hasattr(subclass, 'instance') or
                 NotImplemented)
 
-    def __init__(self, instance: StrikeInstance, *args, **kwargs) -> None:
-        self.__instance = instance
+    def __init__(self, I: StrikeInstance, *args, **kwargs) -> None:
+        self.__I = I
         self.setup(*args, **kwargs)
 
     @property
-    def instance(self) -> StrikeInstance:
-        return self.__instance
+    def I(self) -> StrikeInstance:
+        return self.__I
 
     @abstractmethod
     def setup(self, *args, **kwargs) -> None:
         pass
 
     @abstractmethod
-    def decide(self, i: int, n_i: int, m_i: int, s_i: int, p_i: int, h_i: int) -> int:
+    def decide(self, i: int, r_i: int, s_i: int, p_i: int, h_i: int) -> int:
         pass
 
     @property
     def solution(self) -> StrikeSolution:
-        n, m = self.instance.n, self.instance.m
-        s, p, h = self.instance.s, self.instance.p, self.instance.h
-        n_i = n
+        r_i = self.I.n
         # List comprehension has better performance than initializing to zeros
         # or using append.
-        def decide(i, s_i, p_i, h_i):
-            nonlocal n_i
-            f_i = self.decide(i, n_i, m - i, s_i, p_i, h_i)
-            n_i -= f_i
-            return f_i, n_i
-        solution = [decide(i, s_i, p_i, h_i)
-                    for i, (s_i, p_i, h_i)
-                    in enumerate(zip(s, p, h))]
-        return StrikeSolution(self.instance, solution)
+        r = [r_i := r_i - self.decide(i, r_i, s_i, p_i, h_i)
+             for i, (s_i, p_i, h_i) in enumerate(self.I)]
+        return StrikeSolution.from_r(self.I, r)
 
 
-@dataclass
+@dataclass(frozen=True)
 class StrikeSolution:
-    instance: StrikeInstance
-    solution: list[tuple[int, int]]
+    I: StrikeInstance
+    f: list[int]
+    r: list[int]
+    cost: int
 
-    @property
-    def cost(self) -> int:
-        return sum(f_i * p_i + h_i * r_i
-                   for (f_i, r_i), p_i, h_i
-                   in zip(self.solution, self.instance.p, self.instance.h))
+    def __post_init__(self) -> None:
+        assert len(self.f) == len(self.r) == self.I.m
+        assert all(f_i >= 0 for f_i in self.f)
+        assert all(r_i >= 0 for r_i in self.r)
+        assert sum(self.f) == self.I.n
+        assert all(n_i - f_i == r_i
+                   for n_i, f_i, r_i
+                   in zip(self.r, self.f[1:], self.r[1:]))
+        assert self.r[-1] == 0
+
+    @classmethod
+    def no_cost(cls, I: StrikeInstance, f: list[int], r: list[int]) -> StrikeSolution:
+        cost = sum(f_i * p_i + h_i * r_i for f_i, r_i, p_i, h_i in zip(f, r, I.p, I.h))
+        return cls(I, f, r, cost)
+
+    @classmethod
+    def from_f(cls, I: StrikeInstance, f: list[int]) -> StrikeSolution:
+        r_i = I.n
+        return cls.no_cost(I, f, [r_i := r_i - f_i for f_i in f])
+
+    @classmethod
+    def from_r(cls, I: StrikeInstance, r: list[int]) -> StrikeSolution:
+        print([I.n] + r[:-1], r)
+        return cls.no_cost(I, [n_i - r_i for n_i, r_i in zip([I.n] + r[:-1], r)], r)
+
+    def __iter__(self) -> zip[tuple[int, int]]:
+        return zip(self.f, self.r)
 
 
 class qThresholdOnline(OnlineAlgorithm):
