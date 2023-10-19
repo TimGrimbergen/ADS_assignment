@@ -101,7 +101,6 @@ class StrikeSolution:
 
     @classmethod
     def from_r(cls, I: StrikeInstance, r: list[int]) -> StrikeSolution:
-        print([I.n] + r[:-1], r)
         return cls.no_cost(I, [n_i - r_i for n_i, r_i in zip([I.n] + r[:-1], r)], r)
 
     def __iter__(self) -> zip[tuple[int, int]]:
