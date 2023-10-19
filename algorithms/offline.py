@@ -1,32 +1,40 @@
+from online import StrikeInstance, StrikeSolution
+
 # returns tuple ('schedule array', 'total_cost')
 # terminology is the same as what's used in the paper
-def solve_offline(n: int, m: int, s: list[int], p: list[int], h: list[int]):
-    assert n >= 1, "n must be at least 1"
-    assert m >= 1, "m must be at least 1"
-    assert len(s) == len(p) == len(h) == m, "s, p, h must have length m"
-    assert all(p_i >= 1 for p_i in p), "p[i] must be at least 1"
-    assert all(s_i >= 1 for s_i in s), "s[i] must be at least 1"
-    assert all(h_i >= 0 for h_i in h), "h[i] must be at least 0"
-    assert sum(s) >= n, "sum(s) must be at least n"
+def solve_offline(instance: StrikeInstance) -> StrikeSolution:
+    n, m = instance.n, instance.m
+    s, p, h = instance.s, instance.p, instance.h
 
     # Total cost per day with property:
     # t[i] = p[i] + sum(h[j] for j in range(i))
     t = [p_i + sum(h[:i]) for i, p_i in enumerate(p)]
 
-    # Number of people flying on day f[i].
-    f = [0 for _ in range(m)]
-    for _, s_i, i in sorted(zip(t, s, range(m))):
-        f[i] = min(n, s_i)
-        n -= f[i]
+    n_i = n
+    def greedy(i, s_i):
+        nonlocal n_i
+        f_i = min(n_i, s_i)
+        n_i -= f_i
+        return i, f_i, n_i
+
+    # Sort by t[i] in ascending order.
+    solution = (greedy(i, s_i) for _, i, s_i in sorted(zip(t, range(m), s)))
+    # Sort by i in ascending order.
+    solution = [(f_i, n_i) for _, f_i, n_i in sorted(solution)]
+
+    # # Number of people flying on day f[i].
+    # f = [0 for _ in range(m)]
+    # for _, s_i, i in sorted(zip(t, s, range(m))):
+    #     f[i] = min(n, s_i)
+    #     n -= f[i]
 
     assert n == 0, "n must be 0 after all days have been scheduled"
 
-    # Number of people staying on day r[i], calculated by summing how many
-    # people flew home after day i.
-    r = [sum(f[i+1:]) for i in range(m)]
+    # # Number of people staying on day r[i], calculated by summing how many
+    # # people flew home after day i.
+    # r = [sum(f[i+1:]) for i in range(m)]
 
-    # Format to: (flying, staying), total_cost
-    return list(zip(f, r)), sum(f[i] * t[i] for i in range(m))
+    return StrikeSolution(instance, solution)
 
 
 if __name__ == "__main__":
