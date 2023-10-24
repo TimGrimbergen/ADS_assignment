@@ -1,8 +1,14 @@
 import sys
 import random
 
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
 
 LAMBDA = 1 #The lambda value used as the upper limit for generating random values
+CONSIDER_N_LAST_DAYS = 3 #The number of days to consider when observing the price trend
 
 
 # parent class with basic online algorithm functionality
@@ -77,10 +83,10 @@ class qThresholdOnline(OnlineAlgorithms):
 
         # given some data, decide (how many people to send back, how many people to keep in a hotel)
         def decide(n_remaining, day, s_day, p_day, h_day):
-            if p_day < self.threshold:
-                decision = (s_day, n_remaining - s_day)
-            elif (day + 1) >= self.m: # if last day
+            if (day + 1) >= self.m: # if last day
                 decision = (s_day, n_remaining - s_day) # send max people back
+            elif p_day < self.threshold:
+                decision = (s_day, n_remaining - s_day)
             else:
                 decision = (0, n_remaining) # send no people, everyone stays 
 
@@ -142,3 +148,53 @@ class RandomizedQThresholdOnline(RandomOnline):
             return decision
         
         return decide
+    
+
+class PredictionOnline(RandomOnline):
+    # We send n_remaining - randint(1, lambda) if enough seats are available else as many as possible when p[i] < q * p_max
+    
+    def __init__(self):
+        super().__init__()
+        self.algorithm_name = "Prediction Online"
+        self.s_history = [] #s_history is the history of prices
+        self.decision_function = self.get_decision_function()
+        self.counter = 0
+
+    def is_price_increasing(self, days):
+            if len(self.s_history) < 1 or days == 0:
+                return False
+            x = np.array([i for i in range(len(self.s_history))]).reshape((-1, 1))
+            y = np.array(self.s_history).reshape((-1, 1))
+            model = LinearRegression().fit(x[:days], y[:days])
+            
+            return True if model.coef_ >= 0 else False
+        
+    def is_price_below_average(self, s_day):
+        return s_day < sum(self.s_history) / len(self.s_history)
+    
+    # this function instantiates the decision function
+    def get_decision_function(self):
+
+        # given some data, decide (how many people to send back, how many people to keep in a hotel)
+        def decide(n_remaining, day, s_day, p_day, h_day):
+            self.s_history.append(s_day)
+            price_increasing = self.is_price_increasing(min(day, CONSIDER_N_LAST_DAYS)) #The current price trend according to linear regression on the history of prices
+            price_below_average = self.is_price_below_average(s_day)
+            #Remove magic values
+            probability_of_buying = (.7 if price_increasing else .3 + .8 if price_below_average else .2) / 2
+            if (day + 1) >= self.m: # if last day
+                flying = min(n_remaining, s_day)
+                staying = n_remaining - flying
+                decision = (flying, staying) # send max people back
+            elif random.random() < probability_of_buying:
+                flying = min(n_remaining, s_day)   
+                staying = n_remaining - flying
+                decision = (flying, staying)
+            else:
+                decision = (0, n_remaining) # send no people, everyone stays 
+
+            return decision
+        
+        return decide
+    
+    

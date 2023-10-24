@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from algorithms.offline import solve_offline
-from algorithms.online import qThresholdOnline, RandomizedQThresholdOnline
+from algorithms.online import qThresholdOnline, RandomizedQThresholdOnline, PredictionOnline
 from input_output_handler import deserialize, validate_params, parse_output, serialize
 
 input_file_directory = 'input' 
@@ -34,6 +34,9 @@ elif algorithm == "deterministic": # online deterministic algorithm
 
 elif algorithm == "random": # online randomized algorithm
     output = RandomizedQThresholdOnline(np.sqrt(1/p_max), p_max).solve_instance(params)
+
+elif algorithm == "prediction": # online randomized algorithm
+    output = PredictionOnline().solve_instance(params)
 
 else:
     output = solve_offline(*params) # default, fallback
