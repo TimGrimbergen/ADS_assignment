@@ -142,3 +142,30 @@ class RandomizedQThresholdOnline(RandomOnline):
             return decision
         
         return decide
+    
+class RandomizedPmaxProximityOnline(RandomOnline):
+    # Describe
+    
+    def __init__(self, p_max):
+        super().__init__()
+        self.algorithm_name = "Randomized Pmax proximity Online"
+        self.p_max = p_max
+        self.decision_function = self.get_decision_function()
+
+    # this function instantiates the decision function
+    def get_decision_function(self):
+
+        # given some data, decide (how many people to send back, how many people to keep in a hotel)
+        def decide(n_remaining, day, s_day, p_day, h_day):
+            if (day + 1) >= self.m: # if last day
+                flying = min(n_remaining, s_day)
+                staying = n_remaining - flying
+                decision = (flying, staying) # send max people back
+            else:
+                probability_buy = max(1 - s_day / self.p_max, 0.01)
+                flying = len(random.choices(range(n_remaining), weights = [probability_buy for p in range(n_remaining)]))
+                staying = n_remaining - flying
+                decision = (flying, staying)
+            return decision
+        
+        return decide
