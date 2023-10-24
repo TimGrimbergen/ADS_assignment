@@ -144,7 +144,7 @@ class RandomizedQThresholdOnline(RandomOnline):
         return decide
     
 class RandomizedPmaxProximityOnline(RandomOnline):
-    # Describe
+    # Send the more people home the lower the ratio between the current seat price and the max price is
     
     def __init__(self, p_max):
         super().__init__()
@@ -162,7 +162,7 @@ class RandomizedPmaxProximityOnline(RandomOnline):
                 staying = n_remaining - flying
                 decision = (flying, staying) # send max people back
             else:
-                probability_buy = max(1 - s_day / self.p_max, 0.01)
+                probability_buy = max(1 - s_day / self.p_max, 0.01) #prevent p = 0
                 flying = len(random.choices(range(n_remaining), weights = [probability_buy for p in range(n_remaining)]))
                 staying = n_remaining - flying
                 decision = (flying, staying)
