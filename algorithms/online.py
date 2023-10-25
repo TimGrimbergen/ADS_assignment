@@ -72,7 +72,11 @@ class RandomizedPmaxProximityOnline(Algorithm):
             flying = min(n_i, s_i)
             decision = flying # send max people back
         else:
-            probability_buy = max(1 - s_i / self.p_max, 0.01) #prevent p = 0
+            probability_buy = 0.01
+            if p_i < self.p_max / 3:
+                probability_buy = 1
+            elif p_i < self.p_max / 6:
+                probability_buy = max(1 - p_i / self.p_max, 0.01) #prevent p = 0
             flying = sum([random.random() < probability_buy for i in range(n_i)])
             decision = flying
         return decision
