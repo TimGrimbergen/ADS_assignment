@@ -163,6 +163,7 @@ def test_online_until_converged(N: int, instances: Iterable[Instance], algorithm
         data[i, 0] = ratio
         data[i, 1] = online_solution.cost
         data[i, 2] = offline_solution.cost
+
         delta = (ratio - avg_ratio) / i if i > 0 else 0
         avg_ratio += delta
         
@@ -188,9 +189,11 @@ def histogram_plot_data(save_location, file_name, data):
     plt.savefig(f'{save_location}/{file_name}')
 
 def violin_plot_data(save_location, file_name, data):
-    data = [point[:,0] for point in data]
-    plt.figure(dpi=300)
+    labels = [point[1] for point in data]
+    data = [point[0][:,0] for point in data]
+    plt.figure(dpi=300).subplots_adjust(bottom=0.2)
     plt.violinplot(data, showmeans=True)
-    plt.xticks(ticks = range(1, len(data) + 1), labels = ["QThreshold", "RandomOnline"])
+    plt.rcParams.update({'xtick.labelsize': 'small'})  
+    plt.xticks(ticks = range(1, len(data) + 1), labels = labels)
     plt.title("Violin plot of observed competitive ratios")
     plt.savefig(f'{save_location}/{file_name}')

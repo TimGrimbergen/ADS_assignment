@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from algorithms.offline import solve_offline
-from algorithms.online import qThresholdOnline, RandomOnline
+from algorithms.online import qThresholdOnline, RandomizedQThresholdOnline
 from input_output_handler import deserialize, validate_params, parse_output, serialize
 
 input_file_directory = 'input' 
@@ -23,17 +23,17 @@ params = deserialize(f'{input_file_directory}/{case}')
 
 # validate the parameters
 validate_params(*params)
+p_max = np.max(params[3])
 
 # select algorithm function
 if algorithm == "offline": # offline algorithm
     output = solve_offline(*params)
 
 elif algorithm == "deterministic": # online deterministic algorithm
-    p_max = np.max(params[3])
     output = qThresholdOnline(np.sqrt(1/p_max), p_max).solve_instance(params)
 
 elif algorithm == "random": # online randomized algorithm
-    output = RandomOnline().solve_instance(params)
+    output = RandomizedQThresholdOnline(np.sqrt(1/p_max), p_max).solve_instance(params)
 
 else:
     output = solve_offline(*params) # default, fallback
