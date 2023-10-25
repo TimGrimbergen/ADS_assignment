@@ -190,15 +190,6 @@ class Algorithm(ABC):
 
 
 class RandomAlgorithm(Algorithm):
-    def __init__(self, I: Instance, *args, **kwargs) -> None:
-        super().__init__(I, *args, **kwargs)
-
-    def setup(self, *args, **kwargs) -> None:
-        raise NotImplementedError
-
-    def decide(self, i: int, r_i: int, s_i: int, p_i: int, h_i: int) -> int:
-        raise NotImplementedError
-
     def solution(self, max_iter: int = 1e4, epsilon: float = 1e-5) -> RandomSolution:
         """Run the algorithm until the cost converges."""
         random_solution = RandomSolution(self.I)
