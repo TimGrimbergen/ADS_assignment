@@ -1,12 +1,19 @@
 # Loads an input file assuming a certain format, returns a list of parameters.
 def deserialize(file):
     with open(file, 'r') as f:
+        s = []
+        p = []
+        h = []
+
         lines = [line for line in f]
+    
         n = int(lines[0])
         m = int(lines[1])
-        s = [int(x) for x in lines[2].split(', ')]
-        p = [int(x) for x in lines[3].split(', ')]
-        h = [int(x) for x in lines[4].split(', ')]
+        for i in range(2, len(lines)):
+            sph = lines[i].split(', ')
+            s.append(int(sph[0]))
+            p.append(int(sph[1]))
+            h.append(int(sph[2]))
     
     return [n, m, s, p, h]
 
