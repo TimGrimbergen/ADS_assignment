@@ -17,14 +17,17 @@ p_max = 100
 
 instances = list(generate_test_instances(N=N, n=1, m=10, s=1, h=0, p=(p_min, p_max)))
 
-data = test_online_until_avgcase(N, instances, QThreshold, np.sqrt(1/p_max))
-plot_data(data, 'figures', 'qThreshold')
+qThreshold_data = test_online_until_avgcase(N, instances, QThreshold, np.sqrt(1/p_max))
+plot_data('figures', 'qThreshold', qThreshold_data)
 
-data = test_online_until_avgcase(N, instances, RandomizedQThresholdOnline, np.sqrt(1/p_max), LAMBDA)
-plot_data(data, 'figures', 'RandomizedQThresholdOnline')
+randomOnline_data = test_online_until_avgcase(N, instances, RandomizedQThresholdOnline, np.sqrt(1/p_max), LAMBDA)
+plot_data('figures', 'RandomizedQThresholdOnline', randomOnline_data)
 
-data = test_online_until_avgcase(N, instances, RandomizedPmaxProximityOnline)
-plot_data(data, 'figures', 'RandomizedPmaxProximityOnline')
+randomizedPmaxProximityOnline_data = test_online_until_avgcase(N, instances, RandomizedPmaxProximityOnline)
+plot_data('figures', 'RandomizedPmaxProximityOnline', randomizedPmaxProximityOnline_data)
 
-data = test_online_until_avgcase(N, instances, Random)
-plot_data(data, 'figures', 'RandomOnline')
+random_data = test_online_until_avgcase(N, instances, Random)
+plot_data('figures', 'RandomOnline', random_data)
+
+plot_data('figures', 'violin', (qThreshold_data, "qThreshold"), (randomOnline_data, "Randomized\nQThreshold\nOnline"), 
+            (randomizedPmaxProximityOnline_data, "Randomized\nPmaxProximity\nOnline"), (random_data, "RandomOnline"))
