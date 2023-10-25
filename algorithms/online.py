@@ -4,9 +4,6 @@ import numpy as np
 from .strike import BoundedInstance, Algorithm
 
 
-LAMBDA = 1 #The lambda value used as the upper limit for generating random values
-
-
 class QThreshold(Algorithm):
     """
     We send as many people as possible home when p[i] < q * p_max
@@ -41,42 +38,12 @@ class Random(Algorithm):
     
     def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
         return random.randint(0, min(s_i, n_i)) if i < self.I.m else min(s_i, n_i)   
-
-
-class qThresholdOnline(Random):
-    # We send as many people as possible home when p[i] < q * p_max
-    # ASSUMPTIONS FOR THEORETICAL RESULTS:
-    #   - s[i] = n
-    #   - 1 <= p[i] <= p_max
-    #   - h[i] = 0
-    #   - online algorithm knows the range of p[i] (important!)
-
-    # We think the optimal choice of q is q=sqrt(1/p_max)
-
-    def setup(self):
-        super().setup()
-        self.algorithm_name = "Q-Threshold Online"
-        self.threshold = np.sqrt(1/self.I.p_max) * self.I.p_max
-
-    # given some data, decide (how many people to send back, how many people to keep in a hotel)
-    def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
-        
-        if p_i < self.threshold:
-            decision = min(n_i, s_i)
-        elif (i + 1) >= self.I.m: # if last day
-            decision = n_i # send max people back
-        else:
-            decision = 0 # send no people, everyone stays 
-
-        return decision
     
 class RandomizedQThresholdOnline(Random):
     # We send n_i - randint(1, lambda) if enough seats are available else as many as possible when p[i] < q * p_max
     
-    def setup(self, lam = LAMBDA):
-        super().setup()
-        self.algorithm_name = "Randomized Q-Threshold Online"
-        self.threshold = np.sqrt(1/self.I.p_max) * self.I.p_max
+    def setup(self, q: int, lam: int):
+        self.threshold = q * self.I.p_max
         self.lam = lam
 
     # given some data, decide (how many people to send back, how many people to keep in a hotel)
@@ -98,8 +65,6 @@ class RandomizedPmaxProximityOnline(Random):
     # Send the more people home the lower the ratio between the current seat price and the max price is
     
     def setup(self):
-        super().setup()
-        self.algorithm_name = "Randomized Pmax proximity Online"
         self.p_max = self.I.p_max
 
     # this function instantiates the decision function
