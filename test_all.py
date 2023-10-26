@@ -23,7 +23,7 @@ plot_data('figures', 'qThreshold', qThreshold_data)
 randomOnline_data = test_online(N, instances, RandomizedQThresholdOnline, np.sqrt(1/p_max), LAMBDA)
 plot_data('figures', 'RandomizedQThresholdOnline', randomOnline_data)
 
-randomizedPmaxProximityOnline_data = test_online(N, instances, RandomizedPmaxProximityOnline)
+randomizedPmaxProximityOnline_data = test_online(N, instances, RandomizedPmaxProximityOnline, 1, 1)
 plot_data('figures', 'RandomizedPmaxProximityOnline', randomizedPmaxProximityOnline_data)
 
 random_data = test_online(N, instances, Random)
