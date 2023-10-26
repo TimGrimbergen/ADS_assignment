@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from itertools import chain
 from math import sqrt
+import numpy as np
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,14 @@ class Instance:
 class BoundedInstance(Instance):
     p_max: int
     h_max: int
+
+    @classmethod
+    def random(cls, n: int|range, m: int|range, p_max: int|range, h_max: int|range) -> BoundedInstance:
+        rng = np.random.default_rng()
+        s = np.full(m, n)
+        p = rng.integers(1, p_max + 1, size=m)
+        h = rng.integers(0, h_max + 1, size=m)
+        return cls(n, m, s, p, h, p_max, h_max)
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -106,12 +115,16 @@ class Welford:
         self.__k = 0
         self.__M = 0
         self.__S = 0
+        self.__max = float('-inf')
+        self.__min = float('inf')
 
     def update(self, x: float) -> float:
         self.__k += 1
         delta = x - self.__M
         self.__M += delta / self.__k
         self.__S += delta * (x - self.__M)
+        self.__max = max(self.__max, x)
+        self.__min = min(self.__min, x)
         return delta / self.__k
 
     @property
@@ -125,6 +138,14 @@ class Welford:
     @property
     def std(self) -> float:
         return sqrt(self.variance)
+
+    @property
+    def max(self) -> float:
+        return self.__max
+
+    @property
+    def min(self) -> float:
+        return self.__min
 
     def __repr__(self) -> str:
         return f"Welford({self.mean}, {self.std})"

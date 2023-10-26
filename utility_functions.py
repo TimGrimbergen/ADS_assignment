@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from algorithms.offline import solve_offline
 from random import randint, normalvariate
-from algorithms.strike import Instance, BoundedInstance, Algorithm
 from typing import Iterable
 from tqdm import tqdm
+from itertools import *
+from algorithms.strike import *
+from algorithms.offline import *
 
 # function to randomly generate test instances with certain bounds
 def generate_test_instances(N=1, n=100, m=10, s=100, p=(10,100), h=(10,100), r='uniform'):
@@ -95,6 +96,48 @@ def test_online(N: int, instances: Iterable[Instance], algorithm: type[Algorithm
             return data[:i+1]
 
     return data
+
+
+def run_algorithms(n: int, m: int, p_max: int, h_max: int,
+                   *algorithms: tuple[type[Algorithm], tuple, dict],
+                   max_iter: int = 1e5):
+    for _ in range(max_iter):
+        I = BoundedInstance.random(n, m, p_max, h_max)
+        optimal = solve_offline(I)
+        for algorithm, args, kwargs in algorithms:
+            solution = algorithm(I, *args, **kwargs).solution()
+            yield algorithm.name(), solution, optimal
+
+
+def vary_and_track_stats(n: int|range, m: int|range,
+                         p_max: int|range, h_max: int|range,
+                         *algorithms: tuple[type[Algorithm], tuple, dict],
+                         max_iter: int = 1e5):
+    assert sum(isinstance(x, range) for x in (n, m, p_max, h_max)) == 1, \
+        "exactly one of n, m, p_max, h_max must be a range"
+
+    n = repeat(n) if isinstance(n, int) else n
+    m = repeat(m) if isinstance(m, int) else m
+    p_max = repeat(p_max) if isinstance(p_max, int) else p_max
+    h_max = repeat(h_max) if isinstance(h_max, int) else h_max
+
+    stats = {alg_name: Welford() for alg_name, _, _ in algorithms}
+    for n, m, p_max, h_max in zip(n, m, p_max, h_max):
+        for alg_name, solution, optimal in run_algorithms(n, m, p_max, h_max, *algorithms, max_iter=max_iter):
+            ratio = float(solution.cost) / float(optimal.cost)
+            stats[alg_name].update(ratio)
+
+    return stats
+
+
+def track_ratios(n: int, m: int, p_max: int, h_max: int,
+                 *algorithms: tuple[type[Algorithm], tuple, dict],
+                 max_iter: int = 1e5):
+    ratios = {alg.name(): [] for alg, _, _ in algorithms}
+    for alg_name, solution, optimal in run_algorithms(n, m, p_max, h_max, *algorithms, max_iter=max_iter):
+        ratio = float(solution.cost) / float(optimal.cost)
+        ratios[alg_name].append(ratio)
+    return ratios
 
 
 def plot_data(save_location, file_name, *data):
