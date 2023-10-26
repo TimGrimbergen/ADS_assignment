@@ -4,6 +4,7 @@ from algorithms.offline import solve_offline
 from random import randint, normalvariate
 from algorithms.strike import Instance, BoundedInstance, Algorithm
 from typing import Iterable
+from tqdm import tqdm
 
 # function to randomly generate test instances with certain bounds
 def generate_test_instances(N=1, n=100, m=10, s=100, p=(10,100), h=(10,100), r='uniform'):
@@ -69,7 +70,7 @@ def test_online(N: int, instances: Iterable[Instance], algorithm: type[Algorithm
 
     data = np.zeros((N, 3))
     avg_ratio = 0
-    for i, I in zip(range(N), instances):
+    for i, I in tqdm(zip(range(N), instances), total=N):
         # run the online algoritm on the instance (cost is stored in 'data' variable)
         online_solution = algorithm(I, *args, **kwargs).solution()
         offline_solution = solve_offline(I)
@@ -106,6 +107,7 @@ def histogram_plot_data(save_location, file_name, data):
     plt.figure(dpi=300)
     plt.hist(data[:,0])
     plt.title("Histogram of observed competitive ratios")
+    plt.yscale('log')
     plt.savefig(f'{save_location}/{file_name}')
 
 def violin_plot_data(save_location, file_name, data):
@@ -116,4 +118,5 @@ def violin_plot_data(save_location, file_name, data):
     plt.rcParams.update({'xtick.labelsize': 'small'})
     plt.xticks(ticks = range(1, len(data) + 1), labels = labels)
     plt.title("Violin plot of observed competitive ratios")
+    plt.yscale('log')
     plt.savefig(f'{save_location}/{file_name}')

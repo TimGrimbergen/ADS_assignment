@@ -74,8 +74,7 @@ class RandomizedPmaxProximityOnline(RandomAlgorithm):
 
     # given some data, decide (how many people to send back, how many people to keep in a hotel)
     def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
-        alpha, beta = math.floor(math.sqrt(self.p_max)), math.floor(math.sqrt(self.p_max))
-        if (i + 1) >= self.I.m: # if last day
+        if i == self.I.m: # if last day
             flying = min(n_i, s_i)
             decision = flying # send max people back
         else:
@@ -85,6 +84,6 @@ class RandomizedPmaxProximityOnline(RandomAlgorithm):
                 probability_buy = 1/(self.a - self.b) * p_i - self.b / (self.a - self.b) # linearly decrease probability of buying tickets
             else: #self.b <= p_i
                 probability_buy = 0
-            flying = sum([random.random() < probability_buy for i in range(n_i)])
+            flying = sum([random.random() < probability_buy for _ in range(n_i)])
             decision = flying
         return decision

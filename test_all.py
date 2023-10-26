@@ -9,7 +9,7 @@ from utility_functions import generate_test_instances, plot_data, test_online
 
 # use this script to automate testing multiple algorithms.
 
-N = 100
+N = int(1e4)
 LAMBDA = 1 #The lambda value used as the upper limit for generating random values
 
 p_min = 1
@@ -23,7 +23,7 @@ plot_data('figures', 'qThreshold', qThreshold_data)
 randomOnline_data = test_online(N, instances, RandomizedQThresholdOnline, np.sqrt(1/p_max), LAMBDA)
 plot_data('figures', 'RandomizedQThresholdOnline', randomOnline_data)
 
-randomizedPmaxProximityOnline_data = test_online(N, instances, RandomizedPmaxProximityOnline, 1, 1)
+randomizedPmaxProximityOnline_data = test_online(N, instances, RandomizedPmaxProximityOnline, 1, 0)
 plot_data('figures', 'RandomizedPmaxProximityOnline', randomizedPmaxProximityOnline_data)
 
 random_data = test_online(N, instances, Random)
