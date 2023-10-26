@@ -1,6 +1,5 @@
 import sys
 import random
-import numpy as np
 from .strike import BoundedInstance, Algorithm
 
 
@@ -39,7 +38,7 @@ class Random(Algorithm):
     def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
         return random.randint(0, min(s_i, n_i)) if i < self.I.m else min(s_i, n_i)   
     
-class RandomizedQThresholdOnline(Random):
+class RandomizedQThresholdOnline(Algorithm):
     # We send n_i - randint(1, lambda) if enough seats are available else as many as possible when p[i] < q * p_max
     
     def setup(self, q: int, lam: int):
@@ -61,24 +60,23 @@ class RandomizedQThresholdOnline(Random):
         return decision
     
 
-class RandomizedPmaxProximityOnline(Random):
+class RandomizedPmaxProximityOnline(Algorithm):
     # Send the more people home the lower the ratio between the current seat price and the max price is
     
     def setup(self):
         self.p_max = self.I.p_max
 
-    # this function instantiates the decision function
-    def get_decision_function(self):
-
-        # given some data, decide (how many people to send back, how many people to keep in a hotel)
-        def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
-            if (i + 1) >= self.I.m: # if last day
-                flying = min(n_i, s_i)
-                decision = flying # send max people back
-            else:
-                probability_buy = max(1 - s_i / self.p_max, 0.01) #prevent p = 0
-                flying = len(random.choices(range(n_i), weights = [probability_buy for p in range(n_i)]))
-                decision = flying
-            return decision
-        
-        return decide
+    # given some data, decide (how many people to send back, how many people to keep in a hotel)
+    def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
+        if (i + 1) >= self.I.m: # if last day
+            flying = min(n_i, s_i)
+            decision = flying # send max people back
+        else:
+            probability_buy = 0.01
+            if p_i < self.p_max / 3:
+                probability_buy = 1
+            elif p_i < self.p_max / 6:
+                probability_buy = max(1 - p_i / self.p_max, 0.01) #prevent p = 0
+            flying = sum([random.random() < probability_buy for i in range(n_i)])
+            decision = flying
+        return decision
