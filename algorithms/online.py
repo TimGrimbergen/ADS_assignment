@@ -76,8 +76,7 @@ class RandomizedPmaxProximityOnline(Algorithm):
 
     # given some data, decide (how many people to send back, how many people to keep in a hotel)
     def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
-        alpha, beta = math.floor(np.sqrt(self.p_max)), math.floor(np.sqrt(self.p_max))
-        if (i + 1) >= self.I.m: # if last day
+        if i >= self.I.m: # if last day
             flying = min(n_i, s_i)
             decision = flying # send max people back
         else:
@@ -89,4 +88,33 @@ class RandomizedPmaxProximityOnline(Algorithm):
                 probability_buy = 0
             flying = sum([random.random() < probability_buy for i in range(n_i)])
             decision = flying
+        return decision
+    
+class GreedyOnline(Algorithm):
+    def setup(self, alpha, beta):
+        self.p_max = self.I.p_max
+        self.hcumsum = [0]
+        self.mineffprice = self.p_max
+        self.mineffprice = self.p_max
+        self.CC = 0
+
+    def decide(self, i: int, n_i: int, s_i: int, p_i: int, h_i: int) -> int:
+        if i >= self.m: 
+            flying = min(n_i, s_i)
+            decision = flying
+        else:
+
+            self.mineffprice = p_i + self.hcumsum[-1]
+            self.hcumsum.append(self.hcumsum[-1] + h_i)
+            c = []
+            # could store known values and binary search...
+            for j in range(0, n_i+1):
+                c.append(max( (self.CC+p_i*j+(self.p_max+h_i)*(n_i-j)) / (self.mineffprice*self.I.n),
+                                (self.CC+p_i*j+(1+h_i)*(n_i-j)) / ((min(self.mineffprice,1+self.hcumsum[-1]))*self.I.n)))
+            #print(p_i, n_remaining, self.CC, self.pmin, c)
+            flying = np.argmin(c) # number tickets to buy
+            decision = flying
+
+            self.CC += flying*p_i + (n_i-flying) * h_i
+
         return decision
