@@ -118,54 +118,68 @@ class GreedyOnline(OnlineAlgorithms):
         self.algorithm_name = "Greedy_Online" 
         self.decision_function = self.get_decision_function()
         self.pmax = pmax
-        self.pmin = pmax
+        self.hcumsum = [0]
+        self.mineffprice = pmax
         self.CC = 0
 
     def get_decision_function(self):
         def decision(n_remaining, day, s_i, p_i, h_i):
             if day == self.m - 1: return [n_remaining, 0]
-            p_min_temp = min(self.pmin, p_i)
-            # x = round( (self.pmax*n_remaining - p_min_temp*n_remaining - self.CC*(p_min_temp-1) ) / ( self.pmax + p_i*p_min_temp - p_min_temp - p_i ))
-            x = round( (self.pmax*n_remaining - p_i*n_remaining )/ ( self.pmax + p_i**2 - 2*p_i ))
-            if x >= 1:
-                self.pmin = p_min_temp
-            # x = round( (self.pmax*n_remaining - self.pmin*n_remaining )/ ( self.pmax + p_i**2 - 2*p_i ))
-            self.CC += x*p_i
+            self.mineffprice = p_i + self.hcumsum[-1]
+            self.hcumsum.append(self.hcumsum[-1] + h_i)
+            c = []
+            # could store known values and binary search...
+            for j in range(0, n_remaining+1):
+                c.append(max( (self.CC+p_i*j+(self.pmax+h_i)*(n_remaining-j)) / (self.mineffprice*self.n),
+                              (self.CC+p_i*j+(1+h_i)*(n_remaining-j)) / ((min(self.mineffprice,1+self.hcumsum[-1]))*self.n)))
+            #print(p_i, n_remaining, self.CC, self.pmin, c)
+            x = np.argmin(c) # number tickets to buy
+
+            #if x >= 1: # why is this necessary?
+            #    self.pmin = p_min_temp
+
+            self.CC += x*p_i + (n_remaining-x) * h_i
             return [x, n_remaining - x]
 
         return decision
     
     def reset(self):
-        self.pmin = self.pmax
+        self.mineffprice = self.pmax
+        self.hcumsum = [0]
         self.CC = 0
-        
+
 class SuperGreedyOnline(OnlineAlgorithms):
     def __init__(self, pmax):
         super().__init__()
         self.algorithm_name = "Super_Greedy_Online" 
         self.decision_function = self.get_decision_function()
         self.pmax = pmax
-        self.pmin = pmax
+        self.mineffprice = pmax
+        self.hcumsum = [0]
         self.CC = 0
 
     def get_decision_function(self):
         def decision(n_remaining, day, s_i, p_i, h_i):
             if day == self.m - 1: return [n_remaining, 0]
-            self.p_min = min(self.pmin, p_i)
-            next_cost = [[(p_i_1, (self.CC + p_i*x + (p_i_1)*(n_remaining-x)) / min(self.p_min,p_i_1)) for p_i_1 in range(1,self.pmax+1)] for x in range(n_remaining+1)]
-            #print(next_cost)
+            self.mineffprice = min(self.mineffprice, p_i + self.hcumsum[-1])
+            self.hcumsum.append(self.hcumsum[-1] + h_i)
+            # this function does too much calculating (at least for h=0)... we only need to calculate for x = 0 and x = n_remaining (see GreedyOnline)
+            next_cost = [[(p_i_1, (self.CC + p_i*x + (p_i_1+h_i)*(n_remaining-x)) / (min(self.mineffprice,p_i_1+self.hcumsum[-1])*self.n)) for p_i_1 in range(1,self.pmax+1)] for x in range(n_remaining+1)]
+            #print(f"next cost: {next_cost}")
             next_cost_max = [(i,list(sorted(next_cost[i], key=lambda x: -x[1]))[0]) for i in range(n_remaining+1)]
             #print(next_cost_max)
             next_cost_person = list(sorted((next_cost_max), key=lambda x: x[1][1]))
             x = next_cost_person[0][0]
             #print(next_cost_person)
-            self.CC += x*p_i
+
+            self.CC += x*p_i + (n_remaining-x) * (h_i)
             return [x, n_remaining-x]
 
         return decision
     
     def reset(self):
-        self.pmin = self.pmax
+        self.hcumsum = [0]
+        self.mineffprice = self.pmax
         self.CC = 0
 
 class DoubleThresholdOnline(OnlineAlgorithms):
