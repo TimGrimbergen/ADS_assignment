@@ -129,6 +129,9 @@ class Welford:
     def __repr__(self) -> str:
         return f"Welford({self.mean}, {self.std})"
 
+    def __float__(self) -> float:
+        return self.mean
+
 
 @dataclass(frozen=True)
 class RandomSolution:
