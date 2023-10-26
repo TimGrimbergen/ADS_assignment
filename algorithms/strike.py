@@ -164,6 +164,10 @@ class Algorithm(ABC):
                 hasattr(subclass, 'instance') or
                 NotImplemented)
 
+    @classmethod
+    def name(cls) -> str:
+        return cls.__name__
+
     def __init__(self, I: Instance, *args, **kwargs) -> None:
         self.__I = I
         self.setup(*args, **kwargs)
@@ -187,6 +191,7 @@ class Algorithm(ABC):
         r = [r_i := r_i - self.decide(i, r_i, s_i, p_i, h_i)
              for i, (s_i, p_i, h_i) in enumerate(self.I, start=1)]
         return Solution.from_r(self.I, r)
+
 
 
 class RandomAlgorithm(Algorithm):
