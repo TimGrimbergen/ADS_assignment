@@ -101,6 +101,7 @@ def test_online(N: int, instances: Iterable[Instance], algorithm: type[Algorithm
 def run_algorithms(n: int, m: int, p_max: int, h_max: int,
                    *algorithms: tuple[type[Algorithm], tuple, dict],
                    max_iter: int = 1e5):
+    """Run the algorithms on random instances."""
     for _ in range(max_iter):
         I = BoundedInstance.random(n, m, p_max, h_max)
         optimal = solve_offline(I)
@@ -113,6 +114,11 @@ def vary_and_track_ratios(n: int|range, m: int|range,
                           p_max: int|range, h_max: int|range,
                           *algorithms: tuple[type[Algorithm], tuple, dict],
                           max_iter: int = 1e5):
+    """
+    Varys one of the parameters and tracks the ratios of the algorithms.
+    For each algorithm, the ratios are stored in a list of Welford objects.
+    This means it tracks mean, variance, std, min and max.
+    """
     assert sum(isinstance(x, range) for x in (n, m, p_max, h_max)) == 1, \
         "exactly one of n, m, p_max, h_max must be a range"
 
@@ -121,11 +127,11 @@ def vary_and_track_ratios(n: int|range, m: int|range,
     p_max = repeat(p_max) if isinstance(p_max, int) else x := p_max
     h_max = repeat(h_max) if isinstance(h_max, int) else x := h_max
 
-    ratios = {alg.name(): Welford() for alg, _, _ in algorithms}
-    for n, m, p_max, h_max in zip(n, m, p_max, h_max):
+    ratios = {alg.name(): [Welford() for _ in x] for alg, _, _ in algorithms}
+    for i, (n, m, p_max, h_max) in enumerate(zip(n, m, p_max, h_max)):
         for alg_name, solution, optimal in run_algorithms(n, m, p_max, h_max, *algorithms, max_iter=max_iter):
             ratio = float(solution.cost) / float(optimal.cost)
-            ratios[alg_name].update(ratio)
+            ratios[alg_name][i].update(ratio)
 
     return list(x), ratios
 
@@ -133,6 +139,9 @@ def vary_and_track_ratios(n: int|range, m: int|range,
 def track_ratios(n: int, m: int, p_max: int, h_max: int,
                  *algorithms: tuple[type[Algorithm], tuple, dict],
                  max_iter: int = 1e5):
+    """
+    Basically a replacement for test_online, except no early termination (yet).
+    """
     ratios = {alg.name(): [] for alg, _, _ in algorithms}
     for alg_name, solution, optimal in run_algorithms(n, m, p_max, h_max, *algorithms, max_iter=max_iter):
         ratio = float(solution.cost) / float(optimal.cost)
