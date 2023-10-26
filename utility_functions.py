@@ -107,7 +107,7 @@ def test_online_until_avgcase(N: int, instances: Iterable[Instance], algorithm: 
     avg_ratio = 0
     for i, I in zip(range(N), instances):
         # run the online algoritm on the instance (cost is stored in 'data' variable)
-        online_solution = algorithm(I, *args).solution
+        online_solution = algorithm(I, *args).solution()
         offline_solution = solve_offline(I)
         ratio = online_solution.cost / offline_solution.cost
 

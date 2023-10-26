@@ -1,7 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import chain
+from math import sqrt
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,14 @@ class Instance:
     def __iter__(self) -> zip[tuple[int, int, int]]:
         return zip(self.s, self.p, self.h)
 
+    def __eq__(self, other: object) -> bool:
+        return (isinstance(other, Instance) and
+                self.n == other.n and
+                self.m == other.m and
+                self.s == other.s and
+                self.p == other.p and
+                self.h == other.h)
+
 
 @dataclass(frozen=True)
 class BoundedInstance(Instance):
@@ -49,6 +58,12 @@ class BoundedInstance(Instance):
         assert self.h_max >= 0, "h_max must be at least 0"
         assert all(p_i <= self.p_max for p_i in self.p), "p[i] must be at most p_max"
         assert all(h_i <= self.h_max for h_i in self.h), "h[i] must be at most h_max"
+
+    def __eq__(self, other: object) -> bool:
+        return (isinstance(other, BoundedInstance) and
+                self.p_max == other.p_max and
+                self.h_max == other.h_max and
+                super().__eq__(other))
 
 
 @dataclass(frozen=True)
@@ -86,6 +101,59 @@ class Solution:
         return zip(self.f, self.r)
 
 
+class Welford:
+    def __init__(self) -> None:
+        self.__k = 0
+        self.__M = 0
+        self.__S = 0
+
+    def update(self, x: float) -> float:
+        self.__k += 1
+        delta = x - self.__M
+        self.__M += delta / self.__k
+        self.__S += delta * (x - self.__M)
+        return delta / self.__k
+
+    @property
+    def mean(self) -> float:
+        return self.__M
+
+    @property
+    def variance(self) -> float:
+        return self.__S / self.__k if self.__k > 1 else 0
+
+    @property
+    def std(self) -> float:
+        return sqrt(self.variance)
+
+    def __repr__(self) -> str:
+        return f"Welford({self.mean}, {self.std})"
+
+
+@dataclass(frozen=True)
+class RandomSolution:
+    I: Instance
+    f: list[Welford] = field(init=False)
+    r: list[Welford] = field(init=False)
+    cost: Welford = field(init=False)
+
+    def __post_init__(self) -> None:
+        # Use object.__setattr__ to bypass frozen=True
+        object.__setattr__(self, 'f', [Welford() for _ in range(self.I.m)])
+        object.__setattr__(self, 'r', [Welford() for _ in range(self.I.m)])
+        object.__setattr__(self, 'cost', Welford())
+
+    def update(self, solution: Solution) -> float:
+        assert self.I == solution.I, "instance mismatch"
+        for f_i, r_i, p_i, h_i in zip(solution.f, solution.r, self.I.p, self.I.h):
+            self.f[f_i].update(p_i)
+            self.r[r_i].update(h_i)
+        return self.cost.update(solution.cost)
+
+    def __iter__(self) -> zip[tuple[int, int]]:
+        return zip(self.f, self.r)
+
+
 class Algorithm(ABC):
     @classmethod
     def __subclasshook__(cls, subclass: Algorithm):
@@ -95,6 +163,10 @@ class Algorithm(ABC):
                 callable(subclass.decide) and
                 hasattr(subclass, 'instance') or
                 NotImplemented)
+
+    @classmethod
+    def name(cls) -> str:
+        return cls.__name__
 
     def __init__(self, I: Instance, *args, **kwargs) -> None:
         self.__I = I
@@ -106,13 +178,12 @@ class Algorithm(ABC):
 
     @abstractmethod
     def setup(self, *args, **kwargs) -> None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def decide(self, i: int, r_i: int, s_i: int, p_i: int, h_i: int) -> int:
-        pass
+        raise NotImplementedError
 
-    @property
     def solution(self) -> Solution:
         r_i = self.I.n
         # List comprehension has better performance than initializing to zeros
@@ -120,3 +191,15 @@ class Algorithm(ABC):
         r = [r_i := r_i - self.decide(i, r_i, s_i, p_i, h_i)
              for i, (s_i, p_i, h_i) in enumerate(self.I, start=1)]
         return Solution.from_r(self.I, r)
+
+
+class RandomAlgorithm(Algorithm):
+    def solution(self, max_iter: int = 1e4, epsilon: float = 1e-5) -> RandomSolution:
+        """Run the algorithm until the cost converges."""
+        random_solution = RandomSolution(self.I)
+        for _ in range(int(max_iter)):
+            solution = super().solution()
+            delta = random_solution.update(solution)
+            if abs(delta) < epsilon:
+                break
+        return random_solution
