@@ -138,7 +138,7 @@ class RandomSolution:
     cost: Welford = field(init=False)
 
     def __post_init__(self) -> None:
-        # Use __setattr__ to bypass frozen=True
+        # Use object.__setattr__ to bypass frozen=True
         object.__setattr__(self, 'f', [Welford() for _ in range(self.I.m)])
         object.__setattr__(self, 'r', [Welford() for _ in range(self.I.m)])
         object.__setattr__(self, 'cost', Welford())
