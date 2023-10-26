@@ -135,7 +135,7 @@ class RandomSolution:
     I: Instance
     f: list[Welford] = field(init=False)
     r: list[Welford] = field(init=False)
-    cost: Welford = field(init=False, default_factory=Welford)
+    cost: Welford = field(init=False)
 
     def __post_init__(self) -> None:
         # Use __setattr__ to bypass frozen=True
@@ -191,7 +191,6 @@ class Algorithm(ABC):
         r = [r_i := r_i - self.decide(i, r_i, s_i, p_i, h_i)
              for i, (s_i, p_i, h_i) in enumerate(self.I, start=1)]
         return Solution.from_r(self.I, r)
-
 
 
 class RandomAlgorithm(Algorithm):
