@@ -109,25 +109,25 @@ def run_algorithms(n: int, m: int, p_max: int, h_max: int,
             yield algorithm.name(), solution, optimal
 
 
-def vary_and_track_stats(n: int|range, m: int|range,
-                         p_max: int|range, h_max: int|range,
-                         *algorithms: tuple[type[Algorithm], tuple, dict],
-                         max_iter: int = 1e5):
+def vary_and_track_ratios(n: int|range, m: int|range,
+                          p_max: int|range, h_max: int|range,
+                          *algorithms: tuple[type[Algorithm], tuple, dict],
+                          max_iter: int = 1e5):
     assert sum(isinstance(x, range) for x in (n, m, p_max, h_max)) == 1, \
         "exactly one of n, m, p_max, h_max must be a range"
 
-    n = repeat(n) if isinstance(n, int) else n
-    m = repeat(m) if isinstance(m, int) else m
-    p_max = repeat(p_max) if isinstance(p_max, int) else p_max
-    h_max = repeat(h_max) if isinstance(h_max, int) else h_max
+    n = repeat(n) if isinstance(n, int) else x := n
+    m = repeat(m) if isinstance(m, int) else x := m
+    p_max = repeat(p_max) if isinstance(p_max, int) else x := p_max
+    h_max = repeat(h_max) if isinstance(h_max, int) else x := h_max
 
-    stats = {alg_name: Welford() for alg_name, _, _ in algorithms}
+    ratios = {alg.name(): Welford() for alg, _, _ in algorithms}
     for n, m, p_max, h_max in zip(n, m, p_max, h_max):
         for alg_name, solution, optimal in run_algorithms(n, m, p_max, h_max, *algorithms, max_iter=max_iter):
             ratio = float(solution.cost) / float(optimal.cost)
-            stats[alg_name].update(ratio)
+            ratios[alg_name].update(ratio)
 
-    return stats
+    return list(x), ratios
 
 
 def track_ratios(n: int, m: int, p_max: int, h_max: int,
