@@ -57,7 +57,43 @@ def generate_test_instances(N=1, n=100, m=10, s=100, p=(10,100), h=(10,100), r='
 
 
 # function that runs an online algorithm and possible tests its solution against optimal offline solution
-def test_online(N: int, instances: Iterable[Instance], algorithm: type[Algorithm], *args, min_iter=1e3, epsilon=1e-5, **kwargs):
+def test_online_until_avgcase(N: int, instances: Iterable[Instance], algorithm: type[Algorithm], *args, min_iter=100, epsilon=1e-5):
+    '''
+    INPUT:
+        instances (list[tuples])    -   a list containing (random) test instances
+        online_algorithm    -   an object that takes as input (n,m) and has a function/object that
+                                that can be called repeatedly in a loop
+    OUTPUT:
+        data (list[tuples])     -   list containing the relevant data (c-ratios and costs)
+    '''
+
+    data = np.zeros((N, 4))
+    avg_ratio = 0
+    for i, I in zip(range(N), instances):
+        # run the online algoritm on the instance (cost is stored in 'data' variable)
+        online_solution = algorithm(I, *args).solution
+        offline_solution = solve_offline(I)
+        ratio = online_solution.cost / offline_solution.cost
+
+        data[i, 0] = ratio
+        data[i, 1] = online_solution.cost
+        data[i, 2] = offline_solution.cost
+
+        # fancy way to calculate the running average
+        delta = (ratio - avg_ratio) / i if i > 0 else 0
+        avg_ratio += delta
+
+        if i >= min_iter and (delta := abs(delta)) < epsilon:
+            print(f"Epsilon reached at iteration {i}!")
+            print(f"Average is:        {avg_ratio}")
+            print(f"Difference:        {delta}")
+            print()
+            return data[:i+1]
+
+    return data
+
+# function that runs an online algorithm and possible tests its solution against optimal offline solution
+def test_online_until_avgcase(N: int, instances: Iterable[Instance], algorithm: type[Algorithm], *args, min_iter=100, epsilon=1e-5):
     '''
     INPUT:
         instances (list[tuples])    -   a list containing (random) test instances
@@ -71,19 +107,16 @@ def test_online(N: int, instances: Iterable[Instance], algorithm: type[Algorithm
     avg_ratio = 0
     for i, I in zip(range(N), instances):
         # run the online algoritm on the instance (cost is stored in 'data' variable)
-        online_solution = algorithm(I, *args, **kwargs).solution()
+        online_solution = algorithm(I, *args).solution()
         offline_solution = solve_offline(I)
-
-        online_cost = float(online_solution.cost)
-        offline_cost = float(offline_solution.cost)
-        ratio = online_cost / offline_cost
+        ratio = online_solution.cost / offline_solution.cost
 
         data[i, 0] = ratio
-        data[i, 1] = online_cost
-        data[i, 2] = offline_cost
+        data[i, 1] = online_solution.cost
+        data[i, 2] = offline_solution.cost
 
         # fancy way to calculate the running average
-        delta = (ratio - avg_ratio) / i if i > 0 else ratio
+        delta = (ratio - avg_ratio) / i if i > 0 else 0
         avg_ratio += delta
 
         if i >= min_iter and (delta := abs(delta)) < epsilon:
@@ -94,6 +127,53 @@ def test_online(N: int, instances: Iterable[Instance], algorithm: type[Algorithm
             return data[:i+1]
 
     return data
+
+# function that runs an online algorithm and possible tests its solution against optimal offline solution
+def test_online_until_converged(N: int, instances: Iterable[Instance], algorithm: type[Algorithm], *args, min_iter=100, epsilon=1e-4):
+    '''
+    INPUT:
+        instances (list[tuples])    -   a list containing (random) test instances
+        online_algorithm    -   an object that takes as input (n,m) and has a function/object that
+                                that can be called repeatedly in a loop
+    OUTPUT:
+        data (list[tuples])     -   list containing the relevant data (c-ratios and costs)
+    '''
+
+    data = np.zeros((N, 3))
+    avg_ratio = 0
+    for i, I in zip(range(N), instances):
+        print(i, " of ", len(instances))
+        offline_solution = solve_offline(I)
+        current_iteration_ratio = 0
+        online_solution, ratio = None, None
+        j = 0
+        while True:
+            # run the online algoritm on the instance (cost is stored in 'data' variable)
+            online_solution = algorithm(I, *args).solution
+            ratio = online_solution.cost / offline_solution.cost
+
+            # fancy way to calculate the running average
+            delta = (ratio - current_iteration_ratio) / j if j > 0 else 0
+            current_iteration_ratio += delta
+            j += 1
+            if j >= min_iter and (delta := abs(delta)) < epsilon:
+                print(j)
+                break
+
+        data[i, 0] = ratio
+        data[i, 1] = online_solution.cost
+        data[i, 2] = offline_solution.cost
+
+        delta = (ratio - avg_ratio) / i if i > 0 else 0
+        avg_ratio += delta
+        
+        if i >= min_iter and (delta := abs(delta)) < epsilon:
+            print(f"Epsilon reached at iteration {i}!")
+            print(f"Average is:        {avg_ratio}")
+            print(f"Difference:        {delta}")
+            data = data[~np.all(data == 0, axis=1)] #remove zeros
+            return data[:i+1]
+    return data[~np.all(data == 0, axis=1)] #remove zeros
 
 
 def plot_data(save_location, file_name, *data):
@@ -113,7 +193,7 @@ def violin_plot_data(save_location, file_name, data):
     data = [point[0][:,0] for point in data]
     plt.figure(dpi=300).subplots_adjust(bottom=0.2)
     plt.violinplot(data, showmeans=True)
-    plt.rcParams.update({'xtick.labelsize': 'small'})
+    plt.rcParams.update({'xtick.labelsize': 'small'})  
     plt.xticks(ticks = range(1, len(data) + 1), labels = labels)
     plt.title("Violin plot of observed competitive ratios")
     plt.savefig(f'{save_location}/{file_name}')
