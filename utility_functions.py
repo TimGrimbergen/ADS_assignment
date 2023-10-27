@@ -74,7 +74,7 @@ def test_online(N: int, instances: Iterable[Instance], algorithm: type[Algorithm
     for i, I in tqdm(zip(range(N), instances), total=N):
         # run the online algoritm on the instance (cost is stored in 'data' variable)
         online_solution = algorithm(I, *args, **kwargs).solution()
-        offline_solution = solve_offline(I)
+        offline_solution = offline(I)
 
         online_cost = float(online_solution.cost)
         offline_cost = float(offline_solution.cost)
@@ -104,7 +104,7 @@ def run_algorithms(n: int, m: int, p_max: int, h_max: int,
     """Run the algorithms on random instances."""
     for _ in range(max_iter):
         I = BoundedInstance.random(n, m, p_max, h_max)
-        optimal = solve_offline(I)
+        optimal = offline(I)
         for algorithm, args, kwargs in algorithms:
             solution = algorithm(I, *args, **kwargs).solution()
             yield algorithm.name(), solution, optimal

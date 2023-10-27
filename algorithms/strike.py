@@ -56,9 +56,9 @@ class BoundedInstance(Instance):
     @classmethod
     def random(cls, n: int|range, m: int|range, p_max: int|range, h_max: int|range) -> BoundedInstance:
         rng = np.random.default_rng()
-        s = np.full(m, n)
-        p = rng.integers(1, p_max + 1, size=m)
-        h = rng.integers(0, h_max + 1, size=m)
+        s = np.full(m, n).tolist()
+        p = rng.integers(1, p_max + 1, size=m).tolist()
+        h = rng.integers(0, h_max + 1, size=m).tolist()
         return cls(n, m, s, p, h, p_max, h_max)
 
     def __post_init__(self) -> None:
@@ -169,9 +169,9 @@ class RandomSolution:
 
     def update(self, solution: Solution) -> float:
         assert self.I == solution.I, "instance mismatch"
-        for f_i, r_i, p_i, h_i in zip(solution.f, solution.r, self.I.p, self.I.h):
-            self.f[f_i].update(p_i)
-            self.r[r_i].update(h_i)
+        for i, (f_i, r_i) in enumerate(zip(solution.f, solution.r)):
+            self.f[i].update(f_i)
+            self.r[i].update(r_i)
         return self.cost.update(solution.cost)
 
     def __iter__(self) -> zip[tuple[int, int]]:

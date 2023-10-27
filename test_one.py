@@ -1,10 +1,10 @@
 import sys
 import numpy as np
-from algorithms.offline import solve_offline
-from algorithms.online import qThresholdOnline, RandomizedQThresholdOnline
+from algorithms.offline import offline
+from algorithms.Qthreshold import qThresholdOnline, RandomizedQThresholdOnline
 from input_output_handler import deserialize, validate_params, parse_output, serialize
 
-input_file_directory = 'input' 
+input_file_directory = 'input'
 output_file_directory = 'output'
 
 is_debug_run = False
@@ -27,7 +27,7 @@ p_max = np.max(params[3])
 
 # select algorithm function
 if algorithm == "offline": # offline algorithm
-    output = solve_offline(*params)
+    output = offline(*params)
 
 elif algorithm == "deterministic": # online deterministic algorithm
     output = qThresholdOnline(np.sqrt(1/p_max), p_max).solve_instance(params)
@@ -36,7 +36,7 @@ elif algorithm == "random": # online randomized algorithm
     output = RandomizedQThresholdOnline(np.sqrt(1/p_max), p_max).solve_instance(params)
 
 else:
-    output = solve_offline(*params) # default, fallback
+    output = offline(*params) # default, fallback
 
 schedule = output[0]
 total_price = output[1]

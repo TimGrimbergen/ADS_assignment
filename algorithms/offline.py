@@ -2,7 +2,7 @@ from .strike import Instance, Solution
 from itertools import accumulate, chain
 
 
-def solve_offline(I: Instance) -> Solution:
+def offline(I: Instance) -> Solution:
     n_i = I.n
     h_tot = chain([0], accumulate(I.h))
     t = [p_i + h_tot_i for p_i, h_tot_i in zip(I.p, h_tot)]
@@ -21,7 +21,7 @@ if __name__ == "__main__":
         p = list(map(int, f.readline().split(sep=",")))
         h = list(map(int, f.readline().split(sep=",")))
 
-    solution = solve_offline(Instance(n, m, s, p, h))
+    solution = offline(Instance(n, m, s, p, h))
     print(f"Cost: {solution.cost}")
     print("Schedule:")
     for flying, staying in solution:
