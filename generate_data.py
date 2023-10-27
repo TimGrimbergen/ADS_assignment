@@ -14,13 +14,12 @@ from algorithms.offline import offline
 
 
 ALGS: list[type[Algorithm]] = [FastGreedy, QThreshold, Random, RandomizedPmax]
-N = 1000
 NS = [1, 2, 4, 6, 8, 10, 15, 20, 25, 30, 40, 50, 75, 100]
 MS = [1, 2, 4, 6, 8, 10, 15, 20, 25, 30, 40, 50, 75, 100]
 P_MAXS = np.logspace(0, 9, 20, base=2, dtype=int)
 
 
-def run_algorithms(ns, ms, p_maxs, writers, total):
+def run_algorithms(ns, ms, p_maxs, writers, total, N):
     with tqdm(total=N*total) as p:
         for n, m, p_max in zip(ns, ms, p_maxs):
             for i in range(N):
@@ -60,17 +59,24 @@ def open_files(stack: ExitStack, suffix: str):
 
 
 def main():
-    with ExitStack() as stack:
-        writers = open_files(stack, "n")
-        run_algorithms(NS, repeat(10), repeat(128), writers, len(NS))
+    N=1000
+    # with ExitStack() as stack:
+    #     writers = open_files(stack, "n")
+    #     run_algorithms(NS, repeat(10), repeat(128), writers, len(NS), N)
+
+    # with ExitStack() as stack:
+    #     writers = open_files(stack, "m")
+    #     run_algorithms(repeat(10), MS, repeat(128), writers, len(MS), N)
+
+    # with ExitStack() as stack:
+    #     writers = open_files(stack, "p_max")
+    #     run_algorithms(repeat(10), repeat(10), P_MAXS, writers, len(P_MAXS), N)
 
     with ExitStack() as stack:
-        writers = open_files(stack, "m")
-        run_algorithms(repeat(10), MS, repeat(128), writers, len(MS))
+        writers = open_files(stack, "violin")
+        run_algorithms([10], [10], [128], writers, 1, 10_000)
 
-    with ExitStack() as stack:
-        writers = open_files(stack, "p_max")
-        run_algorithms(repeat(10), repeat(10), P_MAXS, writers, len(P_MAXS))
+
 
 
 if __name__ == "__main__":
