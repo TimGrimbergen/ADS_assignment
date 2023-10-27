@@ -2,7 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt 
 import os
 
-
+names = {"FastGreedy_m" : "$\mathrm{ALG}_3$", "FastGreedy_n" : "$\mathrm{ALG}_3$", "FastGreedy_p_max" : "$\mathrm{ALG}_3$",
+         "QThreshold_m" : "$\mathrm{ALG}_2$", "QThreshold_n" : "$\mathrm{ALG}_2$", "QThreshold_p_max" : "$\mathrm{ALG}_2$",
+         "Random_m" : "$\mathrm{ALG}_5$", "Random_n" : "$\mathrm{ALG}_5$", "Random_p_max" : "$\mathrm{ALG}_5$",
+         "RandomizedPmax_m" : "$\mathrm{ALG}_6$", "RandomizedPmax_n" : "$\mathrm{ALG}_6$", "RandomizedPmax_p_max" : "$\mathrm{ALG}_6$"}
    
 def plot_means(file_path, param):
     df = pd.read_csv(file_path, delimiter=',', header = 0)[[param,'mean']]
@@ -12,9 +15,10 @@ def plot_means(file_path, param):
     label = file_path.split("/")[1].split(".")[0]
     mean_min_std = means['mean'] - stds['mean']
     mean_plus_std = means['mean'] + stds['mean']
-    plt.plot(means.index, means['mean'], label = label)
-    plt.fill_between(stds.index, mean_min_std, mean_plus_std, alpha=0.2)
-    plt.xlabel(f"${param}$")
+    plt.plot(means.index, means['mean'], label = names[label])
+    plt.fill_between(stds.index, mean_min_std, mean_plus_std, alpha=0.05)
+    if param == 'pmax': plt.xlabel("$p_{\max}")
+    else:  plt.xlabel(f"{param}")
     plt.ylabel("Average competitive ratio")
     plt.xlim(min(means.index), max(means.index))
     plt.ylim(1, 1.1*max(mean_plus_std))
