@@ -1,8 +1,8 @@
 import csv
 import numpy as np
-from datetime import datetime
-from itertools import product, chain, repeat
+from itertools import repeat
 from tqdm import tqdm
+from contextlib import ExitStack
 
 from algorithms.strike import *
 from algorithms.FastGreedy import FastGreedy
@@ -20,24 +20,13 @@ MS = [1, 2, 4, 6, 8, 10, 15, 20, 25, 30, 40, 50, 75, 100]
 P_MAXS = np.logspace(0, 9, 20, base=2, dtype=int)
 
 
-def instances(n, m, p_max, N=1000):
-    for _ in range(N):
-        yield BoundedInstance.random(n, m, p_max, 0)
-
-
-def main():
-    fname = f"{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}.csv"
-    with open("data.csv", "w") as f:
-        writer = csv.writer(f)
-        writer.writerow(["alg", "n", "m", "p_max", "I", "mean", "std", "min", "max"])
-        vary_n = zip(NS, repeat(10), repeat(128))
-        vary_m = zip(repeat(10), MS, repeat(128))
-        vary_p_max = zip(repeat(10), repeat(10), P_MAXS)
-        progress = tqdm(total=N*(len(NS)+len(MS)+len(P_MAXS)))
-        for n, m, p_max in chain(vary_n, vary_m, vary_p_max):
-            for i, I in enumerate(instances(n, m, p_max, N)):
+def run_algorithms(ns, ms, p_maxs, writers, total):
+    with tqdm(total=N*total) as p:
+        for n, m, p_max in zip(ns, ms, p_maxs):
+            for i in range(N):
+                I = BoundedInstance.random(n, m, p_max, 0)
                 opt_cost = offline(I).cost
-                for alg in ALGS:
+                for alg, writer in zip(ALGS, writers):
                     if issubclass(alg, RandomAlgorithm):
                         if alg == RandomizedPmax:
                             solution = alg(I, 0.9, 0.1).solution(epsilon=0.01)
@@ -50,7 +39,7 @@ def main():
                         max = alg_cost.max / opt_cost
                     elif issubclass(alg, Algorithm):
                         if alg == QThreshold:
-                            solution = alg(I, np.sqrt(p_max)).solution()
+                            solution = alg(I, 1/np.sqrt(p_max)).solution()
                         else:
                             solution = alg(I).solution()
                         alg_cost = solution.cost
@@ -58,8 +47,30 @@ def main():
                         std = 0
                     else:
                         raise TypeError(f"Unknown algorithm type {alg}")
-                    writer.writerow([alg.name(), n, m, p_max, i, mean, std, min, max])
-                progress.update()
+                    writer.writerow([n, m, p_max, i, mean, std, min, max])
+                p.update()
+
+
+def open_files(stack: ExitStack, suffix: str):
+    files = [stack.enter_context(open(f"data/{alg.name()}_{suffix}.csv", "w")) for alg in ALGS]
+    writers = [csv.writer(file) for file in files]
+    for writer in writers:
+        writer.writerow(["n", "m", "p_max", "I", "mean", "std", "min", "max"])
+    return writers
+
+
+def main():
+    with ExitStack() as stack:
+        writers = open_files(stack, "n")
+        run_algorithms(NS, repeat(10), repeat(128), writers, len(NS))
+
+    with ExitStack() as stack:
+        writers = open_files(stack, "m")
+        run_algorithms(repeat(10), MS, repeat(128), writers, len(MS))
+
+    with ExitStack() as stack:
+        writers = open_files(stack, "p_max")
+        run_algorithms(repeat(10), repeat(10), P_MAXS, writers, len(P_MAXS))
 
 
 if __name__ == "__main__":
