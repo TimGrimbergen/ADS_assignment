@@ -14,7 +14,7 @@ from algorithms.offline import offline
 
 
 ALGS: list[type[Algorithm]] = [FastGreedy, QThreshold, Random, RandomizedPmax]
-N = 100
+N = 1000
 NS = [1, 2, 4, 6, 8, 10, 15, 20, 25, 30, 40, 50, 75, 100]
 MS = [1, 2, 4, 6, 8, 10, 15, 20, 25, 30, 40, 50, 75, 100]
 P_MAXS = np.logspace(0, 9, 20, base=2, dtype=int)
@@ -29,7 +29,7 @@ def run_algorithms(ns, ms, p_maxs, writers, total):
                 for alg, writer in zip(ALGS, writers):
                     if issubclass(alg, RandomAlgorithm):
                         if alg == RandomizedPmax:
-                            solution = alg(I, 0.9, 0.1).solution(epsilon=0.01)
+                            solution = alg(I, 0.9, 0.1).solution()
                         else:
                             solution = alg(I).solution()
                         alg_cost = solution.cost
