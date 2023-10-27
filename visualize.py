@@ -5,10 +5,21 @@ import os
 
    
 def plot_means(file_path, param):
-    df = pd.read_csv(file_path, delimiter=',', header = 0)
+    df = pd.read_csv(file_path, delimiter=',', header = 0)[[param,'mean']]
     means = (df.groupby(param).mean())
+    stds = (df.groupby(param).std())
+    print(stds)
     label = file_path.split("/")[1].split(".")[0]
+    mean_min_std = means['mean'] - stds['mean']
+    mean_plus_std = means['mean'] + stds['mean']
     plt.plot(means.index, means['mean'], label = label)
+    plt.fill_between(stds.index, mean_min_std, mean_plus_std, alpha=0.2)
+    plt.xlabel(f"${param}$")
+    plt.ylabel("Average competitive ratio")
+    plt.xlim(min(means.index), max(means.index))
+    plt.ylim(1, 1.1*max(mean_plus_std))
+    plt.xscale('log')
+    plt.yscale('log')
 
 data_files = os.listdir("data")
 m_files, n_files, p_max_files = [], [], []
@@ -21,17 +32,23 @@ for file in data_files:
     else:
         p_max_files.append(file)
 
+plt.figure()
 for file in n_files:
     plot_means(f'data/{file}', 'n')
 plt.legend()
-plt.show()
+plt.savefig("figures/chpt6/n", dpi=300)
+#plt.show()
 
+plt.figure()
 for file in m_files:
     plot_means(f'data/{file}', 'm')
 plt.legend()
-plt.show()
+plt.savefig("figures/chpt6/m", dpi=300)
+#plt.show()
 
+plt.figure()
 for file in p_max_files:
     plot_means(f'data/{file}', 'p_max')
 plt.legend()
-plt.show()
+plt.savefig("figures/chpt6/pmax", dpi=300)
+#plt.show()
