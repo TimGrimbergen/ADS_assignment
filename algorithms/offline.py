@@ -1,3 +1,4 @@
+import sys
 from .strike import Instance, Solution
 from itertools import accumulate, chain
 
@@ -12,17 +13,10 @@ def offline(I: Instance) -> Solution:
 
 
 if __name__ == "__main__":
-    import sys
-
-    with open(sys.argv[1]) as f:
-        n = int(f.readline())
-        m = int(f.readline())
-        s = list(map(int, f.readline().split(sep=",")))
-        p = list(map(int, f.readline().split(sep=",")))
-        h = list(map(int, f.readline().split(sep=",")))
-
-    solution = offline(Instance(n, m, s, p, h))
-    print(f"Cost: {solution.cost}")
-    print("Schedule:")
+    if len(sys.argv) != 2:
+        print("Usage: python3 offline.py <instance>")
+        sys.exit(1)
+    I = Instance.from_file(sys.argv[1])
+    solution = offline(I)
     for flying, staying in solution:
-        print(f"  {flying:>7}, {staying:>7}")
+        print(f"({flying:>7}, {staying:>7})")
