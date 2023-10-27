@@ -5,9 +5,6 @@ m = 10
 pmax = [1,2,3,4,5]
 
 def generate_data(algs, n, m, pmax):
-    data = {alg : [] for alg in algs}
-    means = {alg: 0 for alg in algs}
-
     if isinstance(n, list):
         mean_competitive_ratios = {alg : [] for alg in algs}
         for n_ in n:
