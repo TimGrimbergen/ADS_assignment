@@ -1,17 +1,18 @@
 import pandas as pd
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import os
 
 names = {"FastGreedy_m" : "$\mathrm{ALG}_3$", "FastGreedy_n" : "$\mathrm{ALG}_3$", "FastGreedy_p_max" : "$\mathrm{ALG}_3$",
          "QThreshold_m" : "$\mathrm{ALG}_2$", "QThreshold_n" : "$\mathrm{ALG}_2$", "QThreshold_p_max" : "$\mathrm{ALG}_2$",
          "Random_m" : "$\mathrm{ALG}_5$", "Random_n" : "$\mathrm{ALG}_5$", "Random_p_max" : "$\mathrm{ALG}_5$",
          "RandomizedPmax_m" : "$\mathrm{ALG}_6$", "RandomizedPmax_n" : "$\mathrm{ALG}_6$", "RandomizedPmax_p_max" : "$\mathrm{ALG}_6$"}
-   
+names2 = {"Random": "$\mathrm{ALG}_5$", "RandomizedPmax": "$\mathrm{ALG}_6$", "QThreshold": "$\mathrm{ALG}_2$", "FastGreedy": "$\mathrm{ALG}_3$"}
+
 def plot_means(file_path, param):
     df = pd.read_csv(file_path, delimiter=',', header = 0)[[param,'mean']]
     means = (df.groupby(param).mean())
     stds = (df.groupby(param).std())
-    print(stds)
+    # print(stds)
     label = file_path.split("/")[1].split(".")[0]
     mean_min_std = means['mean'] - stds['mean']
     mean_plus_std = means['mean'] + stds['mean']
@@ -26,14 +27,14 @@ def plot_means(file_path, param):
     plt.yscale('log')
 
 def violin_plot_data(save_location, file_name, data):
-    labels = [point[1] for point in data]
+    labels = [names2[point[1]] for point in data]
+    print(labels)
     data = [point[0]['mean'] for point in data]
-    plt.figure(dpi=300).subplots_adjust(bottom=0.2)
+    plt.figure(dpi=300)
     plt.violinplot(data, showmeans=True)
     plt.rcParams.update({'xtick.labelsize': 'small'})
-    plt.xticks(ticks = range(1, len(data) + 1), labels = labels)
-    plt.title("Violin plot of observed competitive ratios")
-    plt.ylabel("Average competitive ratio")
+    plt.xticks(ticks = range(1, len(data) + 1), labels=labels)
+    plt.ylabel("Competitive ratio")
     plt.yscale('log')
     plt.savefig(f'{save_location}/{file_name}')
 
