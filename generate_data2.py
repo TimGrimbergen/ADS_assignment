@@ -26,5 +26,8 @@ def generate_data(algs, n, m, pmax):
                     append the competitive ratio to competitive_ratios_of_instance[alg]
 
                 append mean competitive ratio of the instance to mean_competitive_ratios[alg]
+        
+        return mean_competitive_ratios
+
 
 
